@@ -1,0 +1,54 @@
+{
+    "name": "microbit-pxt-blelog",
+    "version": "0.0.1",
+    "description": "Data Logger Bluetooth Service",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*",
+        "bluetooth": "*"
+    },
+    "files": [
+        "README.md",
+        "blelog.ts",
+        "blelog.cpp",
+        "shims.d.ts",
+        "enums.d.ts"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "public": true,
+    "targetVersions": {
+        "target": "4.0.18",
+        "targetId": "microbit"
+    },
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "tsprj",
+    "disablesVariants": [
+        "mbdal"
+    ],
+    "authors": [
+        "Bill Siever <bsiever@gmail.com>"
+    ],
+    "card": {
+        "name": "Data Logger Bluetooth Service",
+        "imageUrl": "file:../icon.png",
+        "feedbackUrl": "http://siever.info"
+    },
+    "yotta": {
+        "config": {
+            "DMESG_SERIAL_DEBUG": 1,
+            "DEVICE_DMESG_BUFFER_SIZE": 8192,
+            "microbit-dal": {
+                "bluetooth": {
+                    "open": 0,
+                    "whitelist": 1,
+                    "security_level": "SECURITY_MODE_ENCRYPTION_NO_MITM",
+                    "device_info_service": 0
+                }
+            }
+        }
+    }
+}
