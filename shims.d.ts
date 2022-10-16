@@ -3,7 +3,7 @@
 
     /**
      * Bill Siever
-     * 2021-10-02 Initial Version
+     * 2022-10-16 Initial Version
      *
      * Development environment specifics:
      * Written in Microsoft PXT
@@ -14,7 +14,7 @@
      * Distributed as-is; no warranty is given.
      */
 
-declare namespace i2crr {
+declare namespace blelog {
 }
 
 // Auto-generated. Do not edit. Really.

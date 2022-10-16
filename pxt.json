@@ -12,7 +12,10 @@
         "blelog.ts",
         "blelog.cpp",
         "shims.d.ts",
-        "enums.d.ts"
+        "enums.d.ts", 
+        "BLELogService.h",
+        "BLELogService.cpp",
+        "debug.h"
     ],
     "testFiles": [
         "test.ts"
@@ -46,7 +49,7 @@
                     "open": 0,
                     "whitelist": 1,
                     "security_level": "SECURITY_MODE_ENCRYPTION_NO_MITM",
-                    "device_info_service": 0
+                    "device_info_service": 1
                 }
             }
         }

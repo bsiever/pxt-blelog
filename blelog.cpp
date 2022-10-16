@@ -12,43 +12,19 @@
 */
 
 #include "pxt.h"
-#include "MicroBitI2C.h"
 #include "MicroBit.h"
-
-#if MICROBIT_CODAL
-#include "peripheral_alloc.h"
-#endif 
-
+#include "BLELogService.h"
+#include "debug.h"
 using namespace pxt;
 
 namespace blelog { 
-    
+
     //%
-    void setI2CPins(int sdaPin, int sclPin) {
+    void startBLELogService() {
 #if MICROBIT_CODAL
         // V2
-
-        // destruct at old location
-        uBit.i2c.~MicroBitI2C(); 
-        // Free associated peripherals
-        // Peripherals are allocated starting from Max index (in allocate_peripheral in codal-nrf52's peripheral_alloc.cpp)
-        // _i2c is initialized first, so it'll get NRF_SPIM1, leaving NRF_SPIM0 for i2c (external))
-        free_alloc_peri(NRF_SPIM0);
-        // Get the pins to use
-        MicroBitPin *sda = getPin(sdaPin);
-        MicroBitPin *scl = getPin(sclPin);
-        // https://stackoverflow.com/questions/2166099/calling-a-constructor-to-re-initialize-object
-       new (&uBit.i2c) MicroBitI2C(*sda, *scl);
-#else
-        // V1
-        // Only 1 TWI / I2C port.  Mutually exclusive with on-board periphs: Accelrometer/Magnetometer (compass)
-        // destruct at old location
-        uBit.i2c.~MicroBitI2C(); 
-        // Get the pins to use
-        MicroBitPin *sda = getPin(sdaPin);
-        MicroBitPin *scl = getPin(sclPin);
-        // https://stackoverflow.com/questions/2166099/calling-a-constructor-to-re-initialize-object
-       new (&uBit.i2c) MicroBitI2C(sda->name, scl->name);
+        DEBUG("Running Service\n");
+        BLELogService::getInstance();
 #endif
     }
 }
