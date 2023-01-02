@@ -22,7 +22,7 @@ class BLELogService : public MicroBitBLEService
 {
   public:
     static BLELogService *getInstance();
-    static void setPassphrase(const char* passphrase);
+    void setPassphrase(const char* newPassphrase);
 
   private:
     static BLELogService *service; // Singleton
@@ -61,6 +61,14 @@ class BLELogService : public MicroBitBLEService
     // Override notification process to enforce minimum time between events. 
     bool notifyChrValue( int idx, const uint8_t *data, uint16_t length);
 
+
+    void onAuthorizeRequest(    const microbit_ble_evt_t *p_ble_evt);
+    void onAuthorizeRead(       const microbit_ble_evt_t *p_ble_evt);
+    void onAuthorizeWrite(      const microbit_ble_evt_t *p_ble_evt);
+    void onConfirmation( const microbit_ble_evt_hvc_t *params);
+    void onHVC(                 const microbit_ble_evt_t *p_ble_evt);
+
+
     // Peer Manager Events (re-enable CCCDs)
     void pm_events( const pm_evt_t* p_event);
 
@@ -74,24 +82,15 @@ class BLELogService : public MicroBitBLEService
     typedef enum mbbs_cIdx
     {  
       mbls_cIdxSecurity,     // Read/Write/Notify 
+      mbls_cIdxPassphrase,   // Write
       mbls_cIdxDataLength,   // Read/Notify 
-      mbls_cIdxData,         // Write (request)/Notify 
+      mbls_cIdxData,         // Notify 
+      mbls_cIdxDataRequest,  // Write
       mbls_cIdxErase,        // Write (request)
       mbls_cIdxUsage,        // Read/Notify
+      mbls_cIdxTime,         // Read 
       // ?? FULL???
-
-
-
-
-//        mbbs_cIdxProtocolMode,
-        // mbbs_cIdxHIDInfo,
-        // mbbs_cIdxReportMap,
-        // mbbs_cIdxReport1,
-        // mbbs_cIdxReport2,
-        // mbbs_cIdxReport3,
-        // mbbs_cIdxReport4,  // NOTE: Adding Reports requires updating chars array in HIDService.cpp
-        //                    //       and const numReports to be changed
-        mbbs_cIdxCOUNT
+      mbbs_cIdxCOUNT
     } mbbs_cIdx;
 
     // Service UUID
@@ -100,8 +99,6 @@ class BLELogService : public MicroBitBLEService
     // UUIDs for our service and characteristics
     static const uint16_t charUUID[mbbs_cIdxCOUNT];
     
-    static const int EVT_STATUS;  // Reporters send it via MicroBitEvent()
-
     // Data for each characteristic when they are held by Soft Device.
     MicroBitBLEChar      chars[mbbs_cIdxCOUNT];
 
@@ -109,12 +106,16 @@ class BLELogService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr(int idx)     { return &chars[idx]; };
 
     char gapName[14];
-    char passphrase[129];
-
+    char passphrase[21];
+    uint8_t authorized;
+    char givenPass[20]; // Buffer that represents the tried password / value
     int dummyData;
+
+
 
     void setName();
     void advertise();
+    void setAuthorized(bool nowAuthorized);
 
     // Debugging: Print the attribute / info.
     void debugAttribute(int index); 

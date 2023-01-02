@@ -1,7 +1,11 @@
 
 
+
+
+// Same icon as datalogger block? (f0ce), but blue?  
+//  line-chart: f201? paper-plane: f1d8? share-square: f045
 //% color=#0000FF 
-//% icon="\uf074"
+//% icon="\uf045"       
 //% block="Datalogger Bluetooth Service"
 //% group="micro:bit (V2)"
 namespace blelog {

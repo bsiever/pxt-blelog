@@ -25,11 +25,14 @@ using namespace pxt;
 const uint16_t BLELogService::bleLogService = 0x4ce4; 
 
 const uint16_t BLELogService::charUUID[mbbs_cIdxCOUNT] = {  
-  0x4f64,  // mbls_cIdxSecurity,     // Read/Write/Notify 
-  0x50a4,   // mbls_cIdxDataLength,   // Read/Notify 
-  0x520c,   // mbls_cIdxData,         // Write (request)/Notify 
-  0x53ba,   // mbls_cIdxErase,        // Write (request)
-  0x552c  // mbls_cIdxUsage,        // Read/Notify
+  0x4f64,   // mbls_cIdxSecurity,     // Read / Notify 
+  0x50a4,   // mbls_cIdxPassphrase    // Write
+  0x520c,   // mbls_cIdxDataLength,   // Read/Notify 
+  0x53ba,   // mbls_cIdxData,         // Notify 
+  0x552c,   // mbls_cIdxDataRequest   // Write
+  0x5946,   // mbls_cIdxErase,        // Write (request)
+  0x5be4,   // mbls_cIdxUsage,        // Read/Notify
+  0x5dd8    // mbls_cIdxTime          // Read
   // ?? FULL???
 };
 
@@ -41,47 +44,46 @@ accb4f64-8a4b-11ed-a1eb-0242ac120002
 accb50a4-8a4b-11ed-a1eb-0242ac120002
 accb520c-8a4b-11ed-a1eb-0242ac120002
 accb53ba-8a4b-11ed-a1eb-0242ac120002
-
-Spares:
 accb552c-8a4b-11ed-a1eb-0242ac120002
 accb5946-8a4b-11ed-a1eb-0242ac120002
 accb5be4-8a4b-11ed-a1eb-0242ac120002
 accb5dd8-8a4b-11ed-a1eb-0242ac120002
+
+Spares:
 accb5f72-8a4b-11ed-a1eb-0242ac120002
 accb613e-8a4b-11ed-a1eb-0242ac120002
 accb6332-8a4b-11ed-a1eb-0242ac120002
 
 */
 
-const int BLELogService::EVT_STATUS = 1;  // Event for connect / disconnect; 
 
 BLELogService *BLELogService::service = NULL; // Singleton reference to the service
 
 // Facilitate debugging Peer_manager events
-// static const char * m_event_str[] =
-// {
-//     "PM_EVT_BONDED_PEER_CONNECTED",
-//     "PM_EVT_CONN_SEC_START",
-//     "PM_EVT_CONN_SEC_SUCCEEDED",
-//     "PM_EVT_CONN_SEC_FAILED",
-//     "PM_EVT_CONN_SEC_CONFIG_REQ",
-//     "PM_EVT_CONN_SEC_PARAMS_REQ",
-//     "PM_EVT_STORAGE_FULL",
-//     "PM_EVT_ERROR_UNEXPECTED",
-//     "PM_EVT_PEER_DATA_UPDATE_SUCCEEDED",
-//     "PM_EVT_PEER_DATA_UPDATE_FAILED",
-//     "PM_EVT_PEER_DELETE_SUCCEEDED",
-//     "PM_EVT_PEER_DELETE_FAILED",
-//     "PM_EVT_PEERS_DELETE_SUCCEEDED",
-//     "PM_EVT_PEERS_DELETE_FAILED",
-//     "PM_EVT_LOCAL_DB_CACHE_APPLIED",
-//     "PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED",
-//     "PM_EVT_SERVICE_CHANGED_IND_SENT",
-//     "PM_EVT_SERVICE_CHANGED_IND_CONFIRMED",
-//     "PM_EVT_SLAVE_SECURITY_REQ",
-//     "PM_EVT_FLASH_GARBAGE_COLLECTED",
-//     "PM_EVT_FLASH_GARBAGE_COLLECTION_FAILED",
-// };
+static const char * m_event_str[] =
+{
+    "PM_EVT_BONDED_PEER_CONNECTED",
+    "PM_EVT_CONN_SEC_START",
+    "PM_EVT_CONN_SEC_SUCCEEDED",
+    "PM_EVT_CONN_SEC_FAILED",
+    "PM_EVT_CONN_SEC_CONFIG_REQ",
+    "PM_EVT_CONN_SEC_PARAMS_REQ",
+    "PM_EVT_STORAGE_FULL",
+    "PM_EVT_ERROR_UNEXPECTED",
+    "PM_EVT_PEER_DATA_UPDATE_SUCCEEDED",
+    "PM_EVT_PEER_DATA_UPDATE_FAILED",
+    "PM_EVT_PEER_DELETE_SUCCEEDED",
+    "PM_EVT_PEER_DELETE_FAILED",
+    "PM_EVT_PEERS_DELETE_SUCCEEDED",
+    "PM_EVT_PEERS_DELETE_FAILED",
+    "PM_EVT_LOCAL_DB_CACHE_APPLIED",
+    "PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED",
+    "PM_EVT_SERVICE_CHANGED_IND_SENT",
+    "PM_EVT_SERVICE_CHANGED_IND_CONFIRMED",
+    "PM_EVT_SLAVE_SECURITY_REQ",
+    "PM_EVT_FLASH_GARBAGE_COLLECTED",
+    "PM_EVT_FLASH_GARBAGE_COLLECTION_FAILED",
+};
 
 
 
@@ -93,7 +95,7 @@ void BLELogService::static_pm_events(const pm_evt_t* p_event) {
 
 
 void BLELogService::pm_events(const pm_evt_t* p_event) {
-  //DEBUG("PM Event %s conn %d, peer %d\n",m_event_str[p_event->evt_id], p_event->conn_handle,  p_event->peer_id );
+  DEBUG("PM Event %s conn %d, peer %d\n",m_event_str[p_event->evt_id], p_event->conn_handle,  p_event->peer_id );
   if(p_event->evt_id == PM_EVT_PEER_DATA_UPDATE_SUCCEEDED) {
     // DEBUG("data %d, action %d, token %d, flash changed %d\n", 
     //   p_event->params.peer_data_update_succeeded.data_id,
@@ -137,14 +139,13 @@ BLELogService *BLELogService::getInstance()
     return service;
 }
 
-void BLELogService::setPassphrase(const char *passphrase) {
-  char* _passphrase = BLELogService::getInstance()->passphrase;
-  if(passphrase) {
-    strncpy(_passphrase, passphrase, 128);
-    _passphrase[128]=0; // Ensure null term.
-    DEBUG("Passphrase is %s\n", _passphrase);
+void BLELogService::setPassphrase(const char *newPassphrase) {
+  if(newPassphrase && strlen(newPassphrase)>0) {
+    strncpy(passphrase, newPassphrase, sizeof(passphrase)-1);
+    passphrase[sizeof(passphrase)-1]=0; // Ensure null term.
+    DEBUG("Passphrase is %s\n", passphrase);
   } else {
-    _passphrase[0] = 0;
+    passphrase[0] = 0; 
     DEBUG("Passphrase is NULL\n");
   }
 }
@@ -156,6 +157,7 @@ BLELogService::BLELogService()
 {
 
   DEBUG("BLELog Serv starting\n");
+  memset(givenPass, 0, sizeof(givenPass));
 
 // Base: accb4ce4-8a4b-11ed-a1eb-0242ac120002
   uint8_t baseUUID[] = { 0xac, 0xcb, 0x4c, 0xe4,  0x8a, 0x4b  ,0x11, 0xed,  
@@ -166,57 +168,49 @@ BLELogService::BLELogService()
 
   // Create the data structures that represent each of our characteristics in Soft Device.
   CreateCharacteristic( mbls_cIdxSecurity, charUUID[ mbls_cIdxSecurity ],
-                      (uint8_t *)&dummyData,
-                      sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREAD | microbit_propWRITE_WITHOUT | microbit_propNOTIFY); 
+                      (uint8_t *)&authorized,
+                      sizeof(authorized), sizeof(authorized),
+                      microbit_propREAD  | microbit_propNOTIFY); 
+
+  CreateCharacteristic( mbls_cIdxPassphrase, charUUID[ mbls_cIdxPassphrase ],
+                      (uint8_t *)&givenPass,
+                      sizeof(givenPass), sizeof(givenPass),
+                      microbit_propWRITE_WITHOUT); 
 
   CreateCharacteristic( mbls_cIdxDataLength, charUUID[ mbls_cIdxDataLength ],
                       (uint8_t *)&dummyData,
                       sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREAD | microbit_propNOTIFY); 
+                      microbit_propREADAUTH | microbit_propNOTIFY); 
 
   CreateCharacteristic( mbls_cIdxData, charUUID[ mbls_cIdxData ],
                       (uint8_t *)&dummyData,
                       sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREAD | microbit_propNOTIFY); 
+                      microbit_propWRITE_WITHOUT | microbit_propNOTIFY); 
+
+  CreateCharacteristic( mbls_cIdxDataRequest, charUUID[ mbls_cIdxDataRequest ],
+                      (uint8_t *)&dummyData,
+                      sizeof(dummyData), sizeof(dummyData),
+                      microbit_propWRITE_WITHOUT); 
 
   CreateCharacteristic( mbls_cIdxErase, charUUID[ mbls_cIdxErase ],
                       (uint8_t *)&dummyData,
                       sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREAD | microbit_propNOTIFY); 
+                      microbit_propWRITE_WITHOUT ); 
 
   CreateCharacteristic( mbls_cIdxUsage, charUUID[ mbls_cIdxUsage ],
                       (uint8_t *)&dummyData,
                       sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREAD | microbit_propNOTIFY); 
+                      microbit_propREADAUTH | microbit_propNOTIFY); 
+
+  CreateCharacteristic( mbls_cIdxTime, charUUID[ mbls_cIdxTime ],
+                      (uint8_t *)&dummyData,
+                      sizeof(dummyData), sizeof(dummyData),
+                      microbit_propREADAUTH); 
 
 
-//   CreateCharacteristic( mbbs_cIdxHIDInfo, charUUID[ mbbs_cIdxHIDInfo ],
-//                       (uint8_t *)HIDInfo,
-//                       sizeof(HIDInfo), sizeof(HIDInfo),
-//                       microbit_propREAD );
-
-//   memset(reportMap, 0, reportMapMaxSize);
-//   CreateCharacteristic( mbbs_cIdxReportMap, charUUID[ mbbs_cIdxReportMap ],
-//                       (uint8_t *)reportMap,
-//                       0, reportMapMaxSize,
-//                       microbit_propREAD | microbit_propREADAUTH );
-
-//   for(int i=mbbs_cIdxReport1, idx=0; i<mbbs_cIdxCOUNT;i++, idx++) {
-//     memset(reports[idx], 0, reportMaxSize);
-//     CreateCharacteristic(i, charUUID[i],
-//                         reports[idx],
-//                         0, reportMaxSize,
-//                         microbit_propREAD  | microbit_propNOTIFY | microbit_propREADAUTH);
-//     // Must have report discriptor for OS detection
-//     // NOTE: Assuming INPUT reports
-//     // Report indices are 1-based and in order of addition
-//     addReportDescriptor(charHandles(i)->value, i-mbbs_cIdxReport1+1, 1 /* Input report */);
-//   } 
   pm_register(static_pm_events); 
-
+  setAuthorized(false);
   advertise();
-
 }
 
 /**
@@ -226,7 +220,10 @@ void BLELogService::onConnect( const microbit_ble_evt_t *p_ble_evt)
 {
   DEBUG("BLE Log onConnect\n");
   // Reload Peer data 
+  setAuthorized(strlen(passphrase)==0);
 }
+
+
 
 /**
   * Invoked when BLE disconnects.
@@ -234,6 +231,7 @@ void BLELogService::onConnect( const microbit_ble_evt_t *p_ble_evt)
 void BLELogService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
 {
     DEBUG("BLE Log onDisconnect\n");
+    setAuthorized(false);
 }
 
 void BLELogService::onDataRead( microbit_onDataRead_t *params) {
@@ -256,8 +254,46 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
     DEBUG("BLE Log onDataWritten\n");
     debugAttribute(params->handle);
 
-//     microbit_charattr_t type;
-//     int index = charHandleToIdx(params->handle, &type);
+    microbit_charattr_t type;
+    int index = charHandleToIdx(params->handle, &type);
+
+    switch(index) {
+      case mbls_cIdxSecurity: {
+          if(type == microbit_charattrCCCD) {
+                  DEBUG("BLE Log Report CCCD Changed\n");
+                  bool status = params->len>0 && params->data[0] ? true : false;
+                  // Update the value to do the notify. 
+                  setAuthorized(authorized);
+          }        
+      }
+      break;
+
+      case mbls_cIdxPassphrase: {
+          if(type == microbit_charattrVALUE) {
+            // If already authorized or no passphrase or this passphrase matches.
+            uint8_t passphraseLen = strlen(passphrase);
+            if(authorized ||
+               strlen(passphrase)==0 || 
+               ( passphraseLen == params->len && 
+                 strncmp(passphrase, (char *)params->data,passphraseLen)==0)) {
+              DEBUG("Authorized\n");
+              setAuthorized(true);
+            } else {
+              DEBUG("Invalid Passphrase %s\n", params->data[0]);
+              DEBUG("Authorized = %d\n", authorized);
+              // Leave authorized at current value, but notify / update
+              setAuthorized(false);
+            }
+          }
+      }
+      break;
+
+
+      default:
+        DEBUG("Unhandled write");
+
+    }
+
 
 //     if(index>=mbbs_cIdxReport1 && index<=mbbs_cIdxCOUNT && type == microbit_charattrCCCD) {
 //       DEBUG("BLE Log Report CCCD Changed\n");
@@ -270,8 +306,32 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
 //   } 
 }
 
+
+void BLELogService::onAuthorizeRequest(    const microbit_ble_evt_t *p_ble_evt) {
+    DEBUG("BLE Log onAuthorizeRequest\n");
+
+}
+void BLELogService::onAuthorizeRead(       const microbit_ble_evt_t *p_ble_evt) {
+    DEBUG("BLE Log onAuthorizeRead\n");
+
+}
+void BLELogService::onAuthorizeWrite(      const microbit_ble_evt_t *p_ble_evt) {
+    DEBUG("BLE Log onAuthorizeWrite\n");
+
+}
+
+void BLELogService::onConfirmation( const microbit_ble_evt_hvc_t *params) {
+  DEBUG("BLE Log onConfirmation\n");
+
+}
+void BLELogService::onHVC(                 const microbit_ble_evt_t *p_ble_evt) {
+  DEBUG("BLE Log onHVC\n");
+
+}
+
+
 bool BLELogService::onBleEvent(const microbit_ble_evt_t *p_ble_evt) {
-    //DEBUG("onBleEvent id = %d\n", p_ble_evt->header.evt_id);
+    DEBUG("onBleEvent id = %d\n", p_ble_evt->header.evt_id);
     // Let usual process handle it. 
     return MicroBitBLEService::onBleEvent(p_ble_evt);
 }
@@ -291,11 +351,19 @@ bool BLELogService::notifyChrValue( int idx, const uint8_t *data, uint16_t lengt
 void BLELogService::setName() {
     // set fixed gap name
     // Name has to be <= 12 chars (to fit Adv packet)  
-    //  Maybe:  "mcrobt XXXXX"   or "uBit [XXXXX]"   
+    //  "uBit [XXXXX]"   
     int len = sprintf(gapName, "uBit [%s]", microbit_friendly_name());
     ble_gap_conn_sec_mode_t permissions;
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS( &permissions);
     MICROBIT_BLE_ECHK( sd_ble_gap_device_name_set( &permissions, (uint8_t *)gapName, len) );
+}
+
+
+void BLELogService::setAuthorized(bool nowAuthorized) {
+  DEBUG("setAuthorized(%d)\n", nowAuthorized);
+  authorized = nowAuthorized ? 0xFF : 0x00;
+  setChrValue( mbls_cIdxSecurity, &authorized, sizeof(authorized));
+  notifyChrValue(mbls_cIdxSecurity, &authorized, sizeof(authorized));  
 }
 
 void BLELogService::advertise() {
@@ -310,32 +378,28 @@ void BLELogService::advertise() {
         static ble_uuid_t uuid;  // UUID Struct
         uint8_t m_adv_handle;
  
-        uuid.type = BLE_UUID_TYPE_VENDOR_BEGIN ;
-        uuid.uuid = 0x182; // 1812 is HID 
-        m_advdata.uuids_complete.uuid_cnt = 1;
-        m_advdata.uuids_complete.p_uuids = &uuid;
-        m_advdata.include_appearance = true;
+        // uuid.type = BLE_UUID_TYPE_VENDOR_BEGIN ;
+        // uuid.uuid = 0x182; // 1812 is HID 
+        // m_advdata.uuids_complete.uuid_cnt = 1;
+        // m_advdata.uuids_complete.p_uuids = &uuid;
+        // m_advdata.include_appearance = true;
         // Name needed to be identified by Android
         m_advdata.name_type = BLE_ADVDATA_FULL_NAME;
         
         // Appearance isn't strictly needed for detection 
-        sd_ble_gap_appearance_set(BLE_APPEARANCE_GENERIC_HID );
+        // sd_ble_gap_appearance_set(BLE_APPEARANCE_GENERIC_HID );
 
         // The flags below ensure "pairing mode" so it shows up in Android
-        m_advdata.flags = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED | BLE_GAP_ADV_FLAG_LE_GENERAL_DISC_MODE;
+        // m_advdata.flags = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED | BLE_GAP_ADV_FLAG_LE_GENERAL_DISC_MODE;
 
         ble_gap_adv_params_t    gap_adv_params;
         memset( &gap_adv_params, 0, sizeof( gap_adv_params));
-        gap_adv_params.properties.type  = true /* connectable */
-                                        ? BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED
-                                        : BLE_GAP_ADV_TYPE_NONCONNECTABLE_SCANNABLE_UNDIRECTED;
+        gap_adv_params.properties.type  = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
         gap_adv_params.interval         = ( 1000 * MICROBIT_BLE_ADVERTISING_INTERVAL/* interval_ms */) / 625;  // 625 us units
         if ( gap_adv_params.interval < BLE_GAP_ADV_INTERVAL_MIN) gap_adv_params.interval = BLE_GAP_ADV_INTERVAL_MIN;
         if ( gap_adv_params.interval > BLE_GAP_ADV_INTERVAL_MAX) gap_adv_params.interval = BLE_GAP_ADV_INTERVAL_MAX;
         gap_adv_params.duration         = MICROBIT_BLE_ADVERTISING_TIMEOUT /* timeout_seconds */ * 100;              //10 ms units
-        gap_adv_params.filter_policy    = false /* whitelist */
-                                        ? BLE_GAP_ADV_FP_FILTER_BOTH
-                                        : BLE_GAP_ADV_FP_ANY;
+        gap_adv_params.filter_policy    = BLE_GAP_ADV_FP_ANY;
         gap_adv_params.primary_phy      = BLE_GAP_PHY_1MBPS;
                     
         ble_gap_adv_data_t  gap_adv_data;

@@ -1,7 +1,7 @@
 serial.writeLine("starting...")
 //bluetooth.startUartService()
+//blelog.startBLELogService("AB")
 blelog.startBLELogService()
-//blelog.startBLELogService("Pass")
 let x = 0
 input.onButtonPressed(Button.A, function () {
     serial.writeLine("Logging X,Y,Z")
