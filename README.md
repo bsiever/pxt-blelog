@@ -1,26 +1,34 @@
-# i2c2
+# BLE Log Service
 
 ```package
-pins=github:bsiever/microbit-pxt-i2cpins
+pins=github:bsiever/microbit-pxt-blelog
 ```
 
-This extension allows non-default pins to be used for the micro:bit's I2C
+Extension for Bluetooth Retrieval of the micro:bit v2 data logger's log. 
 
-**Micro:bit v1 only has one I2C port. Changing the pins will prevent the accelerometer/compass from working!!!**
+Service overview
+
+Password : Write:  Must be provided to authorize service
+Clock : Read:  Current micro:bit clock (used to time-date stamp items...Assumes no rollover)
+Reset: write/control point:  Reset the log?
+Data:  Read the data??? Stream as long reads? Or as simple data via notifivations?  Include index into records ?()
+Data 2:  Custom read/write to correct any omissions?
+Data done : Indicate?  to indicate done with data stream???
+
+
+
+
+
 
 # Setting the pins
 
-```sig
+<!-- ```sig
 pins.setI2CPins(sda : DigitalPin,  scl : DigitalPin) : void
-```
+``` -->
 
 Set the Data and Clock pins.
 
 # Acknowledgements 
-
-Development of this extension was sponsored by [MakeKit](https://www.makekit.no/).
-
-Icon based on [Font Awesome icon 0xF074](https://www.iconfinder.com/icons/213043/f074_icon) SVG.
 
 <script src="https://makecode.com/gh-pages-embed.js"></script>
 <script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>

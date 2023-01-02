@@ -71,7 +71,10 @@ class BLELogService : public MicroBitBLEService
 
     // Index for each characteristic in arrays of handles and UUIDs
     typedef enum mbbs_cIdx
-    {
+    {  
+      //mbls_cIdxSecurity, 
+
+
         mbbs_cIdxProtocolMode,
         // mbbs_cIdxHIDInfo,
         // mbbs_cIdxReportMap,
@@ -98,10 +101,6 @@ class BLELogService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr(int idx)     { return &chars[ idx]; };
 
     char gapName[14];
-
-    // HID Info characteristic
-    // Can't be const (may be modified by stack; should be persistent)
-    static uint16_t HIDInfo[2];
 
     int protocolMode;
 

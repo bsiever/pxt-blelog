@@ -1,5 +1,40 @@
 serial.writeLine("starting...")
-serial.writeLine("Press A to configure pins (P1=SDA, P2=SCL) and write a number")
-serial.writeLine("Press B to write a number")
 //bluetooth.startUartService()
 blelog.startBLELogService()
+let x = 0
+input.onButtonPressed(Button.A, function () {
+    serial.writeLine("Logging X,Y,Z")
+    x = x + 1
+    if(x%5==0) {
+        serial.writeLine("Doing a Z...")
+        datalogger.log(
+            datalogger.createCV("x", input.acceleration(Dimension.X)),
+            datalogger.createCV("y", input.acceleration(Dimension.Y)),
+            datalogger.createCV("z", input.acceleration(Dimension.Z))
+            )
+        
+    } else {
+        datalogger.log(
+            datalogger.createCV("x", input.acceleration(Dimension.X)),
+            datalogger.createCV("y", input.acceleration(Dimension.Y))
+            )
+        
+    }
+})
+input.onButtonPressed(Button.AB, function () {
+    serial.writeLine("Clearing Log Full")
+
+//    datalogger.deleteLog(datalogger.DeleteType.Full)
+    datalogger.deleteLog()
+})
+datalogger.includeTimestamp(FlashLogTimeStampFormat.Hours)
+
+datalogger.setColumnTitles(
+"x",
+"y"//,
+//"z"
+)
+
+input.onButtonPressed(Button.B, function() {
+    blelog.dumpBLELog()
+})

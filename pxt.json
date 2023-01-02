@@ -5,14 +5,15 @@
     "license": "MIT",
     "dependencies": {
         "core": "*",
-        "bluetooth": "*"
+        "bluetooth": "*",
+        "datalogger": "*"
     },
     "files": [
         "README.md",
         "blelog.ts",
         "blelog.cpp",
         "shims.d.ts",
-        "enums.d.ts", 
+        "enums.d.ts",
         "BLELogService.h",
         "BLELogService.cpp",
         "debug.h"

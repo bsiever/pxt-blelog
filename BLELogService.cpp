@@ -37,7 +37,7 @@ const uint16_t BLELogService::charUUID[mbbs_cIdxCOUNT] = {
 
 uint16_t BLELogService::HIDInfo[2] = { 
   0x0111,
-  0x0002
+  0x0002 
 };
 
 const int BLELogService::EVT_STATUS = 1;  // Event for connect / disconnect; 
