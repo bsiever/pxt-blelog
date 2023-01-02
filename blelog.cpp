@@ -23,16 +23,19 @@ namespace blelog {
     void startBLELogService(void* passphrase) {
 #if MICROBIT_CODAL
         // V2
+        const char *cpPassphrase = NULL;
+        if(passphrase) {
+            cpPassphrase = ((String)passphrase)->getUTF8Data();
+        }
         DEBUG("Pass is %X\n", passphrase);
         if(!passphrase) {
             DEBUG("No Passphrase\n");
         } else {
-            DEBUG("Passphrase = %s\n", ((String)passphrase)->getUTF8Data());
+            DEBUG("Passphrase = %s\n", cpPassphrase);
         }
         DEBUG("Running Service\n");
         
-        
-        BLELogService::getInstance();
+        BLELogService::getInstance()->setPassphrase(cpPassphrase);
 #endif
     }
     //%

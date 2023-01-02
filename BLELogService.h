@@ -22,6 +22,7 @@ class BLELogService : public MicroBitBLEService
 {
   public:
     static BLELogService *getInstance();
+    static void setPassphrase(const char* passphrase);
 
   private:
     static BLELogService *service; // Singleton
@@ -72,10 +73,17 @@ class BLELogService : public MicroBitBLEService
     // Index for each characteristic in arrays of handles and UUIDs
     typedef enum mbbs_cIdx
     {  
-      //mbls_cIdxSecurity, 
+      mbls_cIdxSecurity,     // Read/Write/Notify 
+      mbls_cIdxDataLength,   // Read/Notify 
+      mbls_cIdxData,         // Write (request)/Notify 
+      mbls_cIdxErase,        // Write (request)
+      mbls_cIdxUsage,        // Read/Notify
+      // ?? FULL???
 
 
-        mbbs_cIdxProtocolMode,
+
+
+//        mbbs_cIdxProtocolMode,
         // mbbs_cIdxHIDInfo,
         // mbbs_cIdxReportMap,
         // mbbs_cIdxReport1,
@@ -98,11 +106,12 @@ class BLELogService : public MicroBitBLEService
     MicroBitBLEChar      chars[mbbs_cIdxCOUNT];
 
     int              characteristicCount()          { return mbbs_cIdxCOUNT; };
-    MicroBitBLEChar *characteristicPtr(int idx)     { return &chars[ idx]; };
+    MicroBitBLEChar *characteristicPtr(int idx)     { return &chars[idx]; };
 
     char gapName[14];
+    char passphrase[129];
 
-    int protocolMode;
+    int dummyData;
 
     void setName();
     void advertise();

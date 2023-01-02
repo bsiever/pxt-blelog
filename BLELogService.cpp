@@ -22,23 +22,36 @@ using namespace pxt;
 
 //////////////// Initialize static members
 
-const uint16_t BLELogService::bleLogService = 0xFFFF; 
+const uint16_t BLELogService::bleLogService = 0x4ce4; 
 
 const uint16_t BLELogService::charUUID[mbbs_cIdxCOUNT] = {  
-  // Alternate values to facilitate debugging
-   0x2A4E,  //  ProtocolMode
-//   0x2A4A,  //  HIDInfo
-//   0x2A4B,  //  Report Map
-//   0x2A4D,  //  Report 0
-//   0x2A4D,  //  Report 1
-//   0x2A4D,  //  Report 2
-//   0x2A4D,  //  Report 3
+  0x4f64,  // mbls_cIdxSecurity,     // Read/Write/Notify 
+  0x50a4,   // mbls_cIdxDataLength,   // Read/Notify 
+  0x520c,   // mbls_cIdxData,         // Write (request)/Notify 
+  0x53ba,   // mbls_cIdxErase,        // Write (request)
+  0x552c  // mbls_cIdxUsage,        // Read/Notify
+  // ?? FULL???
 };
 
-uint16_t BLELogService::HIDInfo[2] = { 
-  0x0111,
-  0x0002 
-};
+/*
+
+service:  accb4ce4-8a4b-11ed-a1eb-0242ac120002
+
+accb4f64-8a4b-11ed-a1eb-0242ac120002
+accb50a4-8a4b-11ed-a1eb-0242ac120002
+accb520c-8a4b-11ed-a1eb-0242ac120002
+accb53ba-8a4b-11ed-a1eb-0242ac120002
+
+Spares:
+accb552c-8a4b-11ed-a1eb-0242ac120002
+accb5946-8a4b-11ed-a1eb-0242ac120002
+accb5be4-8a4b-11ed-a1eb-0242ac120002
+accb5dd8-8a4b-11ed-a1eb-0242ac120002
+accb5f72-8a4b-11ed-a1eb-0242ac120002
+accb613e-8a4b-11ed-a1eb-0242ac120002
+accb6332-8a4b-11ed-a1eb-0242ac120002
+
+*/
 
 const int BLELogService::EVT_STATUS = 1;  // Event for connect / disconnect; 
 
@@ -124,6 +137,17 @@ BLELogService *BLELogService::getInstance()
     return service;
 }
 
+void BLELogService::setPassphrase(const char *passphrase) {
+  char* _passphrase = BLELogService::getInstance()->passphrase;
+  if(passphrase) {
+    strncpy(_passphrase, passphrase, 128);
+    _passphrase[128]=0; // Ensure null term.
+    DEBUG("Passphrase is %s\n", _passphrase);
+  } else {
+    _passphrase[0] = 0;
+    DEBUG("Passphrase is NULL\n");
+  }
+}
 /** 
  * Constructor.
  * Create a representation of the Bluetooth Data Logger Service
@@ -133,19 +157,39 @@ BLELogService::BLELogService()
 
   DEBUG("BLELog Serv starting\n");
 
-  advertise();
+// Base: accb4ce4-8a4b-11ed-a1eb-0242ac120002
+  uint8_t baseUUID[] = { 0xac, 0xcb, 0x4c, 0xe4,  0x8a, 0x4b  ,0x11, 0xed,  
+                    0xa1, 0xeb,  0x02, 0x42, 0xac, 0x12, 0x00, 0x02}; 
+  RegisterBaseUUID(baseUUID);
 
-
-  // Register the base UUID and create the service.
-  bs_uuid_type = BLE_UUID_TYPE_BLE;  // Set the UUID type to 0x01, which should be Bluetooth SIG ID
   CreateService( bleLogService );
 
   // Create the data structures that represent each of our characteristics in Soft Device.
-  // iOS needs protocol mode characteristic for keyboard support
-  CreateCharacteristic( mbbs_cIdxProtocolMode, charUUID[ mbbs_cIdxProtocolMode ],
-                      (uint8_t *)&protocolMode,
-                      sizeof(protocolMode), sizeof(protocolMode),
-                      microbit_propREAD | microbit_propWRITE_WITHOUT ); 
+  CreateCharacteristic( mbls_cIdxSecurity, charUUID[ mbls_cIdxSecurity ],
+                      (uint8_t *)&dummyData,
+                      sizeof(dummyData), sizeof(dummyData),
+                      microbit_propREAD | microbit_propWRITE_WITHOUT | microbit_propNOTIFY); 
+
+  CreateCharacteristic( mbls_cIdxDataLength, charUUID[ mbls_cIdxDataLength ],
+                      (uint8_t *)&dummyData,
+                      sizeof(dummyData), sizeof(dummyData),
+                      microbit_propREAD | microbit_propNOTIFY); 
+
+  CreateCharacteristic( mbls_cIdxData, charUUID[ mbls_cIdxData ],
+                      (uint8_t *)&dummyData,
+                      sizeof(dummyData), sizeof(dummyData),
+                      microbit_propREAD | microbit_propNOTIFY); 
+
+  CreateCharacteristic( mbls_cIdxErase, charUUID[ mbls_cIdxErase ],
+                      (uint8_t *)&dummyData,
+                      sizeof(dummyData), sizeof(dummyData),
+                      microbit_propREAD | microbit_propNOTIFY); 
+
+  CreateCharacteristic( mbls_cIdxUsage, charUUID[ mbls_cIdxUsage ],
+                      (uint8_t *)&dummyData,
+                      sizeof(dummyData), sizeof(dummyData),
+                      microbit_propREAD | microbit_propNOTIFY); 
+
 
 //   CreateCharacteristic( mbbs_cIdxHIDInfo, charUUID[ mbbs_cIdxHIDInfo ],
 //                       (uint8_t *)HIDInfo,
@@ -196,12 +240,12 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
       DEBUG("BLE Log onDataRead\n");
       debugAttribute(params->handle);
       microbit_charattr_t type;
-    //   int index = charHandleToIdx(params->handle, &type);
-    //   int offset = params->offset;
-    //   if(index == mbbs_cIdxReportMap && type == microbit_charattrVALUE) {
-    //     params->data = &(reportMap[offset]);
-    //     params->length = max(reportMapUsed-offset,0);  // Remaining data
-    //   }
+      // int index = charHandleToIdx(params->handle, &type);
+      // int offset = params->offset;
+      // if(index == mbbs_cIdxReportMap && type == microbit_charattrVALUE) {
+      //   params->data = &(reportMap[offset]);
+      //   params->length = max(reportMapUsed-offset,0);  // Remaining data
+      // }
 }
 
 /**
@@ -330,20 +374,12 @@ void BLELogService::debugAttribute(int handle) {
         default:
           typeName = "UNKNOWN";
       }
-      if(index<0 || index>=mbbs_cIdxCOUNT) index = 4;
-      char const *charNames[] = {"Protocol", "Info", "Map", "Report", "Invalid"};
-    //   if(index>=mbbs_cIdxReport1 && index<mbbs_cIdxCOUNT) 
-    //   {
-    //       int report = index-mbbs_cIdxReport1;
-    //       index=3;
-    //       if(reporters[report]) {
-    //         DEBUG("     %s %s (%d : %s)\n", charNames[index], typeName, report, reporters[report]->name);
-    //       } else {
-    //         DEBUG("     %s %s (%d) (BAD INDEX)\n", charNames[index], typeName, report);
-    //       }
-    //   } else {
-    //     DEBUG("     %s %s\n", charNames[index], typeName);
-    //   }
+      if(index<0 || index>=mbbs_cIdxCOUNT) index = mbbs_cIdxCOUNT;
+
+      char const *charNames[] = {"Security", "Data Length", "Data", "Erase", "Usage"};
+      if(index<mbbs_cIdxCOUNT) {
+        DEBUG("     %s %s\n", charNames[index], typeName);
+      }
 #endif
 }
 #endif
