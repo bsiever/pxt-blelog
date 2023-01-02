@@ -20,10 +20,18 @@ using namespace pxt;
 namespace blelog { 
 
     //%
-    void startBLELogService() {
+    void startBLELogService(void* passphrase) {
 #if MICROBIT_CODAL
         // V2
+        DEBUG("Pass is %X\n", passphrase);
+        if(!passphrase) {
+            DEBUG("No Passphrase\n");
+        } else {
+            DEBUG("Passphrase = %s\n", ((String)passphrase)->getUTF8Data());
+        }
         DEBUG("Running Service\n");
+        
+        
         BLELogService::getInstance();
 #endif
     }
