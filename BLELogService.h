@@ -27,7 +27,6 @@ class BLELogService : public MicroBitBLEService
   private:
     static BLELogService *service; // Singleton
 
-
     /**
      * Constructor.
      * Create a representation of the Bluetooth SIG HID Service
@@ -57,26 +56,6 @@ class BLELogService : public MicroBitBLEService
 
     // BLE Events...Let's monitor 'em all. 
     bool onBleEvent(const microbit_ble_evt_t *p_ble_evt);
-
-    // Override notification process to enforce minimum time between events. 
-    bool notifyChrValue( int idx, const uint8_t *data, uint16_t length);
-
-
-    // void onAuthorizeRequest(    const microbit_ble_evt_t *p_ble_evt);
-    // void onAuthorizeRead(       const microbit_ble_evt_t *p_ble_evt);
-    // void onAuthorizeWrite(      const microbit_ble_evt_t *p_ble_evt);
-    void onConfirmation( const microbit_ble_evt_hvc_t *params);
-    // void onHVC(                 const microbit_ble_evt_t *p_ble_evt);
-
-
-    // Peer Manager Events (re-enable CCCDs)
-    void pm_events( const pm_evt_t* p_event);
-
-    // Static instance variables were created to facilitate multiple HID Services
-    // (Now a singleton is used and they could be converted to instance variables)
-
-    // Peer Manager Events (re-enable CCCDs)
-    static void static_pm_events( const pm_evt_t* p_event);
 
     // Index for each characteristic in arrays of handles and UUIDs
     typedef enum mbbs_cIdx
@@ -109,7 +88,12 @@ class BLELogService : public MicroBitBLEService
     char passphrase[21];
     uint8_t authorized;
     char givenPass[20]; // Buffer that represents the tried password / value
-    int dummyData;
+    uint8_t readRequest[8]; // 32-bits for index, 32-bits for size
+    uint32_t readStart;
+    uint32_t readLength;
+    bool readInProgress;
+
+    uint8_t dataBuffer[20];
     char eraseRequest[6];
 
     uint32_t dataLength;
@@ -121,7 +105,7 @@ class BLELogService : public MicroBitBLEService
     void advertise();
     void setAuthorized(bool nowAuthorized);
     void periodicUpdate();
-
+    void resetConnection();
     void updateUsage();
     void updateLength();
 
