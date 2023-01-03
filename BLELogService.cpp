@@ -172,9 +172,10 @@ BLELogService::BLELogService()
   time = 0;
   usage = 0;
   dataLength = 0;
-
+  erase = false; 
   DEBUG("BLELog Serv starting\n");
   memset(givenPass, 0, sizeof(givenPass));
+  memset(eraseRequest, 0, sizeof(eraseRequest));
 
 // Base: accb4ce4-8a4b-11ed-a1eb-0242ac120002
   uint8_t baseUUID[] = { 0xac, 0xcb, 0x4c, 0xe4,  0x8a, 0x4b  ,0x11, 0xed,  
@@ -190,7 +191,7 @@ BLELogService::BLELogService()
                       microbit_propREAD  | microbit_propNOTIFY); 
 
   CreateCharacteristic( mbls_cIdxPassphrase, charUUID[ mbls_cIdxPassphrase ],
-                      (uint8_t *)&givenPass,
+                      (uint8_t *)givenPass,
                       sizeof(givenPass), sizeof(givenPass),
                       microbit_propWRITE_WITHOUT); 
 
@@ -210,12 +211,12 @@ BLELogService::BLELogService()
                       microbit_propWRITE_WITHOUT); 
 
   CreateCharacteristic( mbls_cIdxErase, charUUID[ mbls_cIdxErase ],
-                      (uint8_t *)&dummyData,
-                      sizeof(dummyData), sizeof(dummyData),
+                      (uint8_t *)eraseRequest,
+                      sizeof(eraseRequest), sizeof(eraseRequest),
                       microbit_propWRITE_WITHOUT ); 
 
   CreateCharacteristic( mbls_cIdxUsage, charUUID[ mbls_cIdxUsage ],
-                      (uint8_t *)&dummyData,
+                      (uint8_t *)&usage,
                       sizeof(usage), sizeof(usage),
                       microbit_propREAD | microbit_propREADAUTH | microbit_propNOTIFY); 
 
@@ -247,6 +248,11 @@ void BLELogService::periodicUpdate() {
     if(dataLength != oldLength) {
       notifyChrValue(mbls_cIdxDataLength, (uint8_t*) &dataLength, sizeof(dataLength));  
     }
+  }
+  if(erase) {
+    DEBUG("Erasing now\n");
+    uBit.log.clear(false);
+    erase = false;
   }
 }
 
@@ -280,7 +286,7 @@ void BLELogService::updateUsage() {
     uint32_t totalSize =  uBit.flash.getFlashEnd() - sizeof(uint32_t) - dataStart;
     uint32_t inUse = uBit.log.getDataLength(DataFormat::CSV);
 
-    DEBUG("Usage comp. dataStart=%d, totalSize=%d, inUse=%d\n", dataStart, totalSize, inUse);
+    // DEBUG("Usage comp. dataStart=%d, totalSize=%d, inUse=%d\n", dataStart, totalSize, inUse);
     usage = min(1000,(1000*inUse/totalSize));
     setChrValue( mbls_cIdxUsage, (uint8_t *)&usage, sizeof(usage));
 }
@@ -294,7 +300,6 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
     // Update params.allow, data, and len
     switch(index) {
         case mbls_cIdxDataLength: {
-          DEBUG("Reading Data Length\n");
           if(authorized) {
             updateLength();
             params->allow = true;
@@ -307,7 +312,6 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
         break;
 
         case mbls_cIdxUsage: {
-          DEBUG("Reading Usage\n");
           if(authorized) {
             updateUsage();
             params->allow = true;
@@ -320,10 +324,8 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
         break;
 
         case mbls_cIdxTime: {
-          DEBUG("Reading Time\n");
           if(authorized) {
             time = system_timer_current_time_us();
-            DEBUG("Time %d\n", (uint32_t)time);
             setChrValue( mbls_cIdxTime, (uint8_t *)&time, sizeof(time));
             params->allow = true;
             params->data = (uint8_t *)&time;
@@ -334,7 +336,6 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
 
         }
         break;
-
 
         default:
         // Nothing
@@ -364,7 +365,6 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
     switch(index) {
       case mbls_cIdxSecurity: {
           if(type == microbit_charattrCCCD) {
-                  DEBUG("BLE Log Report CCCD Changed\n");
                   bool status = params->len>0 && params->data[0] ? true : false;
                   // Update the value to do the notify. 
                   setAuthorized(authorized);
@@ -392,6 +392,21 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
       }
       break;
 
+      case mbls_cIdxErase: {
+          DEBUG("Erase request %d %s\n", params->len, params->data);
+          if(type == microbit_charattrVALUE) {
+            if(authorized && params->len==5 && strncmp("ERASE", (char*)params->data, 5)==0) {
+              DEBUG("Erasing...");
+              // Do the erase in the periodic update loop
+              erase = true;
+            } else {
+              DEBUG("ERASE SKIPPED\n");
+            }
+            memset(eraseRequest, 0, sizeof(eraseRequest));
+            setChrValue(mbls_cIdxErase, (uint8_t*)eraseRequest, sizeof(eraseRequest));
+          }
+      }
+      break;
 
       default:
         DEBUG("Unhandled write");

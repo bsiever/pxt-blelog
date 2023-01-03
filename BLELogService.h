@@ -110,10 +110,12 @@ class BLELogService : public MicroBitBLEService
     uint8_t authorized;
     char givenPass[20]; // Buffer that represents the tried password / value
     int dummyData;
+    char eraseRequest[6];
 
     uint32_t dataLength;
     uint64_t time;
     uint16_t usage;
+    bool erase = false;
 
     void setName();
     void advertise();
