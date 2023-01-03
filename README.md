@@ -58,15 +58,19 @@ The passphrase can be provided in the on-service block.  It is not required (no 
 Passphrases are no more than 20 characters.
 ## Data Length
 
+The length of the data in bytes (`uint32_t`).
+
 ## Data
 
 ## Erase
 
 ## Usage
 
+Percentage of log currently in use (`uint16_t` from [0-1000], where 1000=100.0). 
+
 ## Time
 
-The current micro:bit clock (milliseconds) as 
+The current micro:bit clock (milliseconds) as a `uint64_t`.
 
 <script src="https://makecode.com/gh-pages-embed.js"></script>
 <script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>

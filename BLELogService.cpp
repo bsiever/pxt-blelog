@@ -149,19 +149,36 @@ void BLELogService::setPassphrase(const char *newPassphrase) {
     DEBUG("Passphrase is NULL\n");
   }
 }
+
+static void fiberDone(void *data) {
+  release_fiber();
+}
+
+void BLELogService::backgroundFiber(void *data) {
+    BLELogService *instance = (BLELogService*)data;
+    while(true) {
+          instance->periodicUpdate();
+          fiber_sleep(1000);
+    }
+}
+
+
 /** 
  * Constructor.
  * Create a representation of the Bluetooth Data Logger Service
  */
 BLELogService::BLELogService() 
 {
+  time = 0;
+  usage = 0;
+  dataLength = 0;
 
   DEBUG("BLELog Serv starting\n");
   memset(givenPass, 0, sizeof(givenPass));
 
 // Base: accb4ce4-8a4b-11ed-a1eb-0242ac120002
   uint8_t baseUUID[] = { 0xac, 0xcb, 0x4c, 0xe4,  0x8a, 0x4b  ,0x11, 0xed,  
-                    0xa1, 0xeb,  0x02, 0x42, 0xac, 0x12, 0x00, 0x02}; 
+                         0xa1, 0xeb,  0x02, 0x42, 0xac, 0x12, 0x00, 0x02}; 
   RegisterBaseUUID(baseUUID);
 
   CreateService( bleLogService );
@@ -178,9 +195,9 @@ BLELogService::BLELogService()
                       microbit_propWRITE_WITHOUT); 
 
   CreateCharacteristic( mbls_cIdxDataLength, charUUID[ mbls_cIdxDataLength ],
-                      (uint8_t *)&dummyData,
-                      sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREADAUTH | microbit_propNOTIFY); 
+                      (uint8_t *)&dataLength,
+                      sizeof(dataLength), sizeof(dataLength),
+                      microbit_propREAD | microbit_propREADAUTH | microbit_propNOTIFY); 
 
   CreateCharacteristic( mbls_cIdxData, charUUID[ mbls_cIdxData ],
                       (uint8_t *)&dummyData,
@@ -199,18 +216,38 @@ BLELogService::BLELogService()
 
   CreateCharacteristic( mbls_cIdxUsage, charUUID[ mbls_cIdxUsage ],
                       (uint8_t *)&dummyData,
-                      sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREADAUTH | microbit_propNOTIFY); 
+                      sizeof(usage), sizeof(usage),
+                      microbit_propREAD | microbit_propREADAUTH | microbit_propNOTIFY); 
 
   CreateCharacteristic( mbls_cIdxTime, charUUID[ mbls_cIdxTime ],
-                      (uint8_t *)&dummyData,
-                      sizeof(dummyData), sizeof(dummyData),
-                      microbit_propREADAUTH); 
+                      (uint8_t *)&time,
+                      sizeof(time), sizeof(time),
+                      microbit_propREAD | microbit_propREADAUTH); 
 
 
   pm_register(static_pm_events); 
   setAuthorized(false);
   advertise();
+  // Set up fun Fiber for periodic checks
+  create_fiber(BLELogService::backgroundFiber, this, fiberDone);
+}
+
+
+void BLELogService::periodicUpdate() {
+//  DEBUG("Update...\n");
+  if(authorized) {
+    // Update values and do notifies if values change
+    uint16_t oldUsage = usage;
+    updateUsage();
+    if(usage!=oldUsage) {
+      notifyChrValue(mbls_cIdxUsage, (uint8_t*)&usage, sizeof(usage));  
+    }
+    uint32_t oldLength = dataLength;
+    updateLength();
+    if(dataLength != oldLength) {
+      notifyChrValue(mbls_cIdxDataLength, (uint8_t*) &dataLength, sizeof(dataLength));  
+    }
+  }
 }
 
 /**
@@ -223,8 +260,6 @@ void BLELogService::onConnect( const microbit_ble_evt_t *p_ble_evt)
   setAuthorized(strlen(passphrase)==0);
 }
 
-
-
 /**
   * Invoked when BLE disconnects.
   */
@@ -234,10 +269,79 @@ void BLELogService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
     setAuthorized(false);
 }
 
+void BLELogService::updateLength() {
+    dataLength = uBit.log.getDataLength(DataFormat::CSV);
+    setChrValue( mbls_cIdxDataLength, (uint8_t *)&dataLength, sizeof(dataLength));
+}
+
+void BLELogService::updateUsage() {
+//    uint32_t dataStart =  sizeof(MicroBitLog::header) + CONFIG_MICROBIT_LOG_METADATA_SIZE + CONFIG_MICROBIT_LOG_JOURNAL_SIZE;
+    uint32_t dataStart =  2048 + CONFIG_MICROBIT_LOG_METADATA_SIZE + CONFIG_MICROBIT_LOG_JOURNAL_SIZE;
+    uint32_t totalSize =  uBit.flash.getFlashEnd() - sizeof(uint32_t) - dataStart;
+    uint32_t inUse = uBit.log.getDataLength(DataFormat::CSV);
+
+    DEBUG("Usage comp. dataStart=%d, totalSize=%d, inUse=%d\n", dataStart, totalSize, inUse);
+    usage = min(1000,(1000*inUse/totalSize));
+    setChrValue( mbls_cIdxUsage, (uint8_t *)&usage, sizeof(usage));
+}
+
 void BLELogService::onDataRead( microbit_onDataRead_t *params) {
-      DEBUG("BLE Log onDataRead\n");
-      debugAttribute(params->handle);
-      microbit_charattr_t type;
+    DEBUG("BLE Log onDataRead\n");
+    debugAttribute(params->handle);
+    microbit_charattr_t type;
+    int index = charHandleToIdx(params->handle, &type);
+
+    // Update params.allow, data, and len
+    switch(index) {
+        case mbls_cIdxDataLength: {
+          DEBUG("Reading Data Length\n");
+          if(authorized) {
+            updateLength();
+            params->allow = true;
+            params->data = (uint8_t *)&dataLength;
+            params->length = sizeof(dataLength);
+          } else {
+            params->allow = false;
+          }
+        }
+        break;
+
+        case mbls_cIdxUsage: {
+          DEBUG("Reading Usage\n");
+          if(authorized) {
+            updateUsage();
+            params->allow = true;
+            params->data = (uint8_t *)&usage;
+            params->length = sizeof(usage);
+          } else {
+            params->allow = false;
+          }
+        }
+        break;
+
+        case mbls_cIdxTime: {
+          DEBUG("Reading Time\n");
+          if(authorized) {
+            time = system_timer_current_time_us();
+            DEBUG("Time %d\n", (uint32_t)time);
+            setChrValue( mbls_cIdxTime, (uint8_t *)&time, sizeof(time));
+            params->allow = true;
+            params->data = (uint8_t *)&time;
+            params->length = sizeof(time);
+          } else {
+            params->allow = false;
+          }
+
+        }
+        break;
+
+
+        default:
+        // Nothing
+        break;
+    }
+
+
       // int index = charHandleToIdx(params->handle, &type);
       // int offset = params->offset;
       // if(index == mbbs_cIdxReportMap && type == microbit_charattrVALUE) {
@@ -307,27 +411,30 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
 }
 
 
-void BLELogService::onAuthorizeRequest(    const microbit_ble_evt_t *p_ble_evt) {
-    DEBUG("BLE Log onAuthorizeRequest\n");
+// // BSIEVER: Can delete all these...
+// void BLELogService::onAuthorizeRequest(    const microbit_ble_evt_t *p_ble_evt) {
+//     DEBUG("BLE Log onAuthorizeRequest\n");
+//     MicroBitBLEService::onAuthorizeRequest(p_ble_evt);
+// }
+// void BLELogService::onAuthorizeRead(       const microbit_ble_evt_t *p_ble_evt) {
+//     DEBUG("BLE Log onAuthorizeRead\n");
+//     MicroBitBLEService::onAuthorizeRead(p_ble_evt);
 
-}
-void BLELogService::onAuthorizeRead(       const microbit_ble_evt_t *p_ble_evt) {
-    DEBUG("BLE Log onAuthorizeRead\n");
-
-}
-void BLELogService::onAuthorizeWrite(      const microbit_ble_evt_t *p_ble_evt) {
-    DEBUG("BLE Log onAuthorizeWrite\n");
-
-}
+// }
+// void BLELogService::onAuthorizeWrite(      const microbit_ble_evt_t *p_ble_evt) {
+//     DEBUG("BLE Log onAuthorizeWrite\n");
+//     MicroBitBLEService::onAuthorizeWrite(p_ble_evt);
+// }
 
 void BLELogService::onConfirmation( const microbit_ble_evt_hvc_t *params) {
   DEBUG("BLE Log onConfirmation\n");
 
 }
-void BLELogService::onHVC(                 const microbit_ble_evt_t *p_ble_evt) {
-  DEBUG("BLE Log onHVC\n");
 
-}
+// void BLELogService::onHVC(                 const microbit_ble_evt_t *p_ble_evt) {
+//   DEBUG("BLE Log onHVC\n");
+
+// } 
 
 
 bool BLELogService::onBleEvent(const microbit_ble_evt_t *p_ble_evt) {
@@ -440,7 +547,7 @@ void BLELogService::debugAttribute(int handle) {
       }
       if(index<0 || index>=mbbs_cIdxCOUNT) index = mbbs_cIdxCOUNT;
 
-      char const *charNames[] = {"Security", "Data Length", "Data", "Erase", "Usage"};
+      char const *charNames[] = {"Security", "Passphrase", "Data Length", "Data", "Erase", "Usage", "Time"};
       if(index<mbbs_cIdxCOUNT) {
         DEBUG("     %s %s\n", charNames[index], typeName);
       }

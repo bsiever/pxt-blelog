@@ -62,11 +62,11 @@ class BLELogService : public MicroBitBLEService
     bool notifyChrValue( int idx, const uint8_t *data, uint16_t length);
 
 
-    void onAuthorizeRequest(    const microbit_ble_evt_t *p_ble_evt);
-    void onAuthorizeRead(       const microbit_ble_evt_t *p_ble_evt);
-    void onAuthorizeWrite(      const microbit_ble_evt_t *p_ble_evt);
+    // void onAuthorizeRequest(    const microbit_ble_evt_t *p_ble_evt);
+    // void onAuthorizeRead(       const microbit_ble_evt_t *p_ble_evt);
+    // void onAuthorizeWrite(      const microbit_ble_evt_t *p_ble_evt);
     void onConfirmation( const microbit_ble_evt_hvc_t *params);
-    void onHVC(                 const microbit_ble_evt_t *p_ble_evt);
+    // void onHVC(                 const microbit_ble_evt_t *p_ble_evt);
 
 
     // Peer Manager Events (re-enable CCCDs)
@@ -111,14 +111,23 @@ class BLELogService : public MicroBitBLEService
     char givenPass[20]; // Buffer that represents the tried password / value
     int dummyData;
 
-
+    uint32_t dataLength;
+    uint64_t time;
+    uint16_t usage;
 
     void setName();
     void advertise();
     void setAuthorized(bool nowAuthorized);
+    void periodicUpdate();
+
+    void updateUsage();
+    void updateLength();
 
     // Debugging: Print the attribute / info.
     void debugAttribute(int index); 
+
+    static void backgroundFiber(void *data);
+
 };
 #endif
 #endif
