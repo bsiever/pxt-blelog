@@ -16,7 +16,6 @@ Start the BLE Log service (with optional passphrase).  This should be included i
 
 If a passphrase is empty, no passphrase is required for other devices to retrieve data.  If a passphrase is provided, devices must provide the passphrase to retrieve the data over Bluetooth. (The passphrase does not impact access to the data log file on the micro:bit).  If a passphrase is longer than 20 characters, only the first 20 characters are used.
 
-
 # Example
 
 ```block
@@ -62,7 +61,14 @@ The length of the data in bytes (`uint32_t`).
 
 ## Data
 
+Notifiations will be 0-20 bytes.  An empty (length 0) indicates the end of transmitted data.  If non-empty, the first 4 bytes are the index into the message and the remaining bytes are the data starting at that index (up to 16 bytes of data).
+
+## Data Request
+
+A `uint32_t` indicating the index into the log to retrieve.  A `uint32_t` indicating the length (in bytes) to retrieve.  Data is sent via the Data characteristics.
 ## Erase
+
+Write the full word "ERASE" to erase the log file. (Only erases if authorized)
 
 ## Usage
 
