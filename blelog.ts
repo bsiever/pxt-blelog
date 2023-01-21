@@ -6,10 +6,10 @@
 //  line-chart: f201? paper-plane: f1d8? share-square: f045
 //% color=#0000FF 
 //% icon="\uf045"       
-//% block="Datalogger Bluetooth Service"
+//% block="Data Logger Bluetooth"
 //% group="micro:bit (V2)"
 namespace blelog {
-    //% block="start Bluetooth Log Service || with passphase $passphrase"
+    //% block="bluetooth data logger service || with passphase $passphrase"
     //% passphrase.defl=""
     //% shim=blelog::startBLELogService
     //% expandableArgumentMode="toggle"
