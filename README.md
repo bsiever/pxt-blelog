@@ -44,17 +44,16 @@ accb4ce4-8a4b-11ed-a1eb-0242ac120002
 
 ## Security
 
-Read/notify will indicate a true (0x00) if the interactions are authorized and false (0x00) otherwise. (Automatically sends value when notifies are enabled)
+Read/notify will indicate a `true` (0xFF) if the interactions are authorized and `false` (0x00) otherwise. (Automatically sends value when notifies are enabled)
 
-If false, a correct passphrase is required to enable access to other data. 
+If `false`, a correct passphrase is required to enable access to other data. 
 
 ## Passphrase
 
 Characteristic to write passphrase (if needed).  If a passphrase is required and the correct one is provided, other characteristics will be available.  Access will be granted until disconnection.
 
-The passphrase can be provided in the on-service block.  It is not required (no passphrase needed) by default.
+The passphrase that is required can be provided in the `blelog.startBLELogService()` block.  By default (empty passphrase) a passphrase will not be required.  Passphrases are no more than 20 characters.
 
-Passphrases are no more than 20 characters.
 ## Data Length
 
 The length of the data in bytes (`uint32_t`).
@@ -65,18 +64,26 @@ Notifiations will be 0-20 bytes.  An empty (length 0) indicates the end of trans
 
 ## Data Request
 
-A `uint32_t` indicating the index into the log to retrieve.  A `uint32_t` indicating the length (in bytes) to retrieve.  Data is sent via the Data characteristics.
+Two `uint32_t`s:  
+ 
+* A `uint32_t` indicating the index into the log to retrieve.  
+* A `uint32_t` indicating the length (in bytes) to retrieve.  
+
+Data is sent via the Data characteristic notifications (accb**53ba**-8a4b-11ed-a1eb-0242ac120002) 
+
 ## Erase
 
-Write the full word "ERASE" to erase the log file. (Only erases if authorized)
+Write the full word "ERASE" to erase the log file. (It only erases if authorized)
 
 ## Usage
 
-Percentage of log currently in use (`uint16_t` from [0-1000], where 1000=100.0). 
+10 times the percentage of log currently in use (`uint16_t` from [0-1000], where 1000=100.0). 
 
 ## Time
 
 The current micro:bit clock (milliseconds) as a `uint64_t`.
+
+
 
 <script src="https://makecode.com/gh-pages-embed.js"></script>
 <script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
