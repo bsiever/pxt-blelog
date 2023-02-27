@@ -1,8 +1,14 @@
 serial.writeLine("starting...")
-//bluetooth.startUartService()
-//blelog.startBLELogService("AB")
+
 blelog.startBLELogService()
+datalogger.setColumnTitles(
+    "x",
+    "y"//,
+    //"z"
+    )
+    
 let x = 0
+
 input.onButtonPressed(Button.A, function () {
     serial.writeLine("Logging X,Y,Z")
     x = x + 1
@@ -24,17 +30,8 @@ input.onButtonPressed(Button.A, function () {
 })
 input.onButtonPressed(Button.AB, function () {
     serial.writeLine("Clearing Log Full")
-
-//    datalogger.deleteLog(datalogger.DeleteType.Full)
     datalogger.deleteLog()
 })
-datalogger.includeTimestamp(FlashLogTimeStampFormat.Hours)
-
-datalogger.setColumnTitles(
-"x",
-"y"//,
-//"z"
-)
 
 input.onButtonPressed(Button.B, function() {
     blelog.dumpBLELog()

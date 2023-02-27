@@ -14,6 +14,8 @@
 #include "pxt.h"
 #include "MicroBit.h"
 #include "BLELogService.h"
+#include "MicroBitLog.h"  // TimeStampFormat
+
 #include "debug.h"
 using namespace pxt;
 
@@ -22,6 +24,12 @@ namespace blelog {
     //%
     void startBLELogService(void* passphrase) {
 #if MICROBIT_CODAL
+        // Only start service once
+        static bool started = false;
+        if(started) 
+            return;
+        started = true;
+
         // V2
         DEBUG("Pass is %X\n", passphrase);
         const char *cpPassphrase = NULL;
@@ -32,10 +40,12 @@ namespace blelog {
             DEBUG("No Passphrase\n");
         }
         DEBUG("Running Service\n");
-        
+        // Log reboot message (used for timestamp assignments)
+        uBit.log.logString("Reboot\n");
         BLELogService::getInstance()->setPassphrase(cpPassphrase);
 #endif
     }
+
     //%
     void dumpBLELog() {
 #if MICROBIT_CODAL
