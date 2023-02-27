@@ -41,8 +41,9 @@ namespace blelog {
         }
         DEBUG("Running Service\n");
         // Log reboot message (used for timestamp assignments)
-        // uBit.log.setTimeStamp(TimeStampFormat::Seconds);
         uBit.log.logString("Reboot\n");
+        // Set timestamp format to seconds
+        uBit.log.setTimeStamp(TimeStampFormat::Seconds);
         BLELogService::getInstance()->setPassphrase(cpPassphrase);
 #endif
     }
