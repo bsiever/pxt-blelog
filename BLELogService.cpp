@@ -98,7 +98,8 @@ void BLELogService::resetConnection() {
   memset(readRequest, 0, sizeof(readRequest)); // 32-bits for index, 32-bits for size
   readStart = 0;
   readLength = 0;
-  readUpdate = false;
+  if(readInProgress)
+    readUpdate = true;  // Stop the read process
   readInProgress = false;
   memset(givenPass, 0, sizeof(givenPass));
   memset(eraseRequest, 0, sizeof(eraseRequest));
@@ -196,23 +197,27 @@ void BLELogService::periodicUpdate() {
 
     if(readInProgress) {
       // Sanity check
+      int packetCount = 0;
       if(readStart<dataLength) {
         uint32_t endIndex = min(dataLength, readStart+readLength);
         // Send index & <= 16 bytes of data
         while(readStart < endIndex) {
-          DEBUG("read at %d...\n", readStart);
           if(readUpdate) {
             // Exit the loop and start process over with new request
-            break;
+            readUpdate = false;
+            return;
           }
 
           uint32_t amount = min(16, endIndex-readStart);
           memcpy(dataBuffer, &readStart, sizeof(readStart));
+          DEBUG("read %d\n", readStart);
           uBit.log.readData(dataBuffer+4, readStart, amount, DataFormat::CSV, dataLength);
           // Notify / Update
+          DEBUG("N\n");
           notifyChrValue(mbls_cIdxData, dataBuffer, amount+4);  
           // Delay to ensure no overrun.
-          fiber_sleep(1);
+          DEBUG("S\n");
+          fiber_sleep(25);  // Connection event is 10-20ms
           readStart+=amount;
         }
       }
