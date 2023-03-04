@@ -92,6 +92,7 @@ class BLELogService : public MicroBitBLEService
     uint32_t readStart;
     uint32_t readLength;
     bool readInProgress;
+    bool readUpdate;
 
     uint8_t dataBuffer[20];
     char eraseRequest[6];

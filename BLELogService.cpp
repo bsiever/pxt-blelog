@@ -88,7 +88,7 @@ void BLELogService::backgroundFiber(void *data) {
     BLELogService *instance = (BLELogService*)data;
     while(true) {
           instance->periodicUpdate();
-          fiber_sleep(1000);
+          fiber_sleep(100);
     }
 }
 
@@ -98,6 +98,7 @@ void BLELogService::resetConnection() {
   memset(readRequest, 0, sizeof(readRequest)); // 32-bits for index, 32-bits for size
   readStart = 0;
   readLength = 0;
+  readUpdate = false;
   readInProgress = false;
   memset(givenPass, 0, sizeof(givenPass));
   memset(eraseRequest, 0, sizeof(eraseRequest));
@@ -200,6 +201,10 @@ void BLELogService::periodicUpdate() {
         // Send index & <= 16 bytes of data
         while(readStart < endIndex) {
           DEBUG("read at %d...\n", readStart);
+          if(readUpdate) {
+            // Exit the loop and start process over with new request
+            break;
+          }
 
           uint32_t amount = min(16, endIndex-readStart);
           memcpy(dataBuffer, &readStart, sizeof(readStart));
@@ -207,7 +212,7 @@ void BLELogService::periodicUpdate() {
           // Notify / Update
           notifyChrValue(mbls_cIdxData, dataBuffer, amount+4);  
           // Delay to ensure no overrun.
-          fiber_sleep(25);
+          fiber_sleep(1);
           readStart+=amount;
         }
       }
@@ -388,9 +393,16 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
 
       case mbls_cIdxDataRequest: {
           if(type == microbit_charattrVALUE && params->len==8) {
+            if(readInProgress) {
+              DEBUG("Abandoning read in progress\n");
+              readUpdate = true;
+            } else {
+              readUpdate = false;
+            }
             memcpy(&readStart, params->data, 4);
             memcpy(&readLength, params->data+4, 4);
             DEBUG("Reading at index %d of len %d\n", readStart, readLength);
+            // If there's already a read in progress, abandon it.
             readInProgress = true;
             DEBUG("Read in progress..%d\n", readInProgress);
           }
