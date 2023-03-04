@@ -206,19 +206,21 @@ void BLELogService::periodicUpdate() {
             // Exit the loop and start process over with new request
             readUpdate = false;
             return;
-          }
+          } 
 
           uint32_t amount = min(16, endIndex-readStart);
           memcpy(dataBuffer, &readStart, sizeof(readStart));
           DEBUG("read %d\n", readStart);
+          updateLength();
           uBit.log.readData(dataBuffer+4, readStart, amount, DataFormat::CSV, dataLength);
           // Notify / Update
           DEBUG("N\n");
           notifyChrValue(mbls_cIdxData, dataBuffer, amount+4);  
           // Delay to ensure no overrun.
           DEBUG("S\n");
-          fiber_sleep(25);  // Connection event is 10-20ms
-          readStart+=amount;
+          if(!readUpdate)
+            readStart+=amount;
+          fiber_sleep(20);  // Connection event is 10-20ms
         }
       }
       // Send final message / Sentinel (0 length message)

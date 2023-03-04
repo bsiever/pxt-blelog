@@ -68,7 +68,7 @@ namespace blelog {
         //     done = buffer[0] == 0 || buffer[1] == 0xFF;
         //     index++;
         // } while(index<100 && !done);
-        // DEBUG("\n");
+        // DEBUG("\n"); 
 
         uint32_t totalLen = uBit.log.getDataLength(DataFormat::CSV);
         uint32_t remaining = totalLen;
