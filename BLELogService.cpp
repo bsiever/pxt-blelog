@@ -32,7 +32,8 @@ const uint16_t BLELogService::charUUID[mbbs_cIdxCOUNT] = {
   0x552c,   // mbls_cIdxDataRequest   // Write
   0x5946,   // mbls_cIdxErase,        // Write (request)
   0x5be4,   // mbls_cIdxUsage,        // Read/Notify
-  0x5dd8    // mbls_cIdxTime          // Read
+  0x5dd8,   // mbls_cIdxTime          // Read
+  0x5f72    // mbls_cIdxDataRead      // Read & Write
   // ?? FULL???
 };
 
@@ -48,9 +49,9 @@ accb552c-8a4b-11ed-a1eb-0242ac120002
 accb5946-8a4b-11ed-a1eb-0242ac120002
 accb5be4-8a4b-11ed-a1eb-0242ac120002
 accb5dd8-8a4b-11ed-a1eb-0242ac120002
+accb5f72-8a4b-11ed-a1eb-0242ac120002
 
 Spares:
-accb5f72-8a4b-11ed-a1eb-0242ac120002
 accb613e-8a4b-11ed-a1eb-0242ac120002
 accb6332-8a4b-11ed-a1eb-0242ac120002
 
@@ -96,6 +97,7 @@ void BLELogService::resetConnection() {
   DEBUG("Resetting Connection\n");
   erase = false; 
   memset(readRequest, 0, sizeof(readRequest)); // 32-bits for index, 32-bits for size
+  dataLength = 0;
   readStart = 0;
   readLength = 0;
   if(readInProgress)
@@ -165,6 +167,11 @@ BLELogService::BLELogService()
                       sizeof(time), sizeof(time),
                       microbit_propREAD | microbit_propREADAUTH); 
 
+  CreateCharacteristic( mbls_cIdxDataRead, charUUID[ mbls_cIdxDataRead ],
+                      (uint8_t *)&readDataBuffer,
+                      sizeof(readDataBuffer), sizeof(readDataBuffer),
+                      microbit_propREAD | microbit_propREADAUTH | microbit_propWRITE_WITHOUT); 
+
   setAuthorized(false);
   advertise();
   // Set up fun Fiber for periodic checks
@@ -197,7 +204,6 @@ void BLELogService::periodicUpdate() {
 
     if(readInProgress) {
       // Sanity check
-      int packetCount = 0;
       if(readStart<dataLength) {
         uint32_t endIndex = min(dataLength, readStart+readLength);
         // Send index & <= 16 bytes of data
@@ -314,10 +320,43 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
         }
         break;
 
+        case mbls_cIdxDataRead: {
+          if(authorized) {
+            // Get data 
+            DEBUG("Reading Data...\n");
+            setChrValue(mbls_cIdxDataRead, (uint8_t *)&readDataBuffer, readDataBufferLength);
+            params->allow = true;
+            params->data = (uint8_t *)&readDataBuffer;
+            //params->length = readDataBufferLength;
+          } else {
+            params->allow = false;
+          }
+
+        }
+        break;
+
+
         default:
         // Nothing
         break;
     }
+}
+
+
+void BLELogService::logRetrieve(void *data) {
+  BLELogService *instance = (BLELogService*)data;
+  DEBUG("Reading log\n");
+  uint32_t start; 
+  uint32_t len;
+  memcpy(&start, instance->readDataBuffer, sizeof(start));
+  memcpy(&len, instance->readDataBuffer+4, sizeof(len));
+  instance->updateLength();
+  start = min(start, instance->dataLength);
+  len = min(sizeof(instance->readDataBuffer)-8, min(len, instance->dataLength-start));
+  DEBUG("Reading from %d (%d)\n", start, len);
+  uBit.log.readData(instance->readDataBuffer+8, start, len, DataFormat::CSV, instance->dataLength);
+  DEBUG("Read log complete\n");
+  instance->readDataBufferLength = len+8;
 }
 
 /**
@@ -397,7 +436,7 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
       break;
 
       case mbls_cIdxDataRequest: {
-          if(type == microbit_charattrVALUE && params->len==8) {
+          if(authorized && type == microbit_charattrVALUE && params->len==8) {
             if(readInProgress) {
               DEBUG("Abandoning read in progress\n");
               readUpdate = true;
@@ -413,6 +452,26 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
           }
       }
       break;
+
+      case mbls_cIdxDataRead: {
+          if(type == microbit_charattrVALUE) {
+            // If already authorized or no passphrase or this passphrase matches.
+            if(authorized && params->len==8) {
+              uint32_t start;
+              uint32_t len;
+              memcpy(&start, params->data, 4);
+              memcpy(&len, params->data+4, 4);
+              DEBUG("Read request at index %d of len %d\n", start, len);
+              // Identify the actual length to read
+              memcpy(readDataBuffer, &start, 4);
+              memcpy(readDataBuffer+4, &len, 4);
+              // Do fiber thing...
+              create_fiber(BLELogService::logRetrieve, this, fiberDone);
+            }
+          }
+      }
+      break;
+
 
       default:
         DEBUG("Unhandled write");

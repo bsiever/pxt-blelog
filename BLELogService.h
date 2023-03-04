@@ -68,6 +68,7 @@ class BLELogService : public MicroBitBLEService
       mbls_cIdxErase,        // Write (request)
       mbls_cIdxUsage,        // Read/Notify
       mbls_cIdxTime,         // Read 
+      mbls_cIdxDataRead,     // Data Read Request
       // ?? FULL???
       mbbs_cIdxCOUNT
     } mbbs_cIdx;
@@ -89,6 +90,8 @@ class BLELogService : public MicroBitBLEService
     uint8_t authorized;
     char givenPass[20]; // Buffer that represents the tried password / value
     uint8_t readRequest[8]; // 32-bits for index, 32-bits for size
+    uint8_t readDataBuffer[100];  // Buffer for reading directly
+    uint8_t readDataBufferLength;
     uint32_t readStart;
     uint32_t readLength;
     bool readInProgress;
@@ -114,6 +117,7 @@ class BLELogService : public MicroBitBLEService
     void debugAttribute(int index); 
 
     static void backgroundFiber(void *data);
+    static void logRetrieve(void *data);
 
 };
 #endif
