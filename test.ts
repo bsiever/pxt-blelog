@@ -26,6 +26,8 @@ blelog.startBLELogService()
 datalogger.includeTimestamp(FlashLogTimeStampFormat.Seconds)
 basic.forever(function () {
     game.addScore(1)
+    // for(let i = 0; i < 10; i++) {
+
     datalogger.log(
         datalogger.createCV("x", input.acceleration(Dimension.X)),
         datalogger.createCV("y", input.acceleration(Dimension.Y)),
@@ -35,14 +37,13 @@ basic.forever(function () {
         datalogger.createCV("h", 12312.12312123),
         datalogger.createCV("i", 123.65434)
         )
-    // for(let i = 0; i < 10; i++) {
     //     datalogger.log(
     //     datalogger.createCV("x", input.acceleration(Dimension.X)),
     //     datalogger.createCV("y", input.acceleration(Dimension.Y))
     //     )
     //     basic.pause(10)
     // }
-    basic.pause(1000)
+    basic.pause(500)
 })
 
 
