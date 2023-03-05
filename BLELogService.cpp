@@ -96,7 +96,10 @@ void BLELogService::backgroundFiber(void *data) {
 void BLELogService::resetConnection() {
   DEBUG("Resetting Connection\n");
   erase = false; 
-  memset(readRequest, 0, sizeof(readRequest)); // 32-bits for index, 32-bits for size
+  memset(readDataBuffer, 0, sizeof(readDataBuffer));
+  readDataStart = 0;
+
+  memset(readRequest, 0, sizeof(readRequest));
   dataLength = 0;
   readStart = 0;
   readLength = 0;
@@ -169,7 +172,7 @@ BLELogService::BLELogService()
 
   CreateCharacteristic( mbls_cIdxDataRead, charUUID[ mbls_cIdxDataRead ],
                       (uint8_t *)&readDataBuffer,
-                      sizeof(readDataBuffer), sizeof(readDataBuffer),
+                      0, sizeof(readDataBuffer),
                       microbit_propREAD | microbit_propREADAUTH | microbit_propWRITE_WITHOUT); 
 
   setAuthorized(false);
@@ -323,11 +326,18 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
         case mbls_cIdxDataRead: {
           if(authorized) {
             // Get data 
-            DEBUG("Reading Data...\n");
-            setChrValue(mbls_cIdxDataRead, (uint8_t *)&readDataBuffer, readDataBufferLength);
+            int offset = params->offset;
+            int len = params->length;
+            DEBUG("Reading Data... offset %d len %d\n",offset, len);
+//            setChrValue(mbls_cIdxDataRead, (uint8_t *)&readDataBuffer, readDataBufferLength);
             params->allow = true;
-            params->data = (uint8_t *)&readDataBuffer;
-            //params->length = readDataBufferLength;
+            params->data = &(readDataBuffer[offset]);
+            params->length = max(min(sizeof(readDataBuffer)-offset, dataLength + 4 - offset - readDataStart),0);
+
+            // TODO:  If this is the last allowable read of this 200-byte unit, auto-advance (if there's more)
+
+
+
           } else {
             params->allow = false;
           }
@@ -346,17 +356,14 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
 void BLELogService::logRetrieve(void *data) {
   BLELogService *instance = (BLELogService*)data;
   DEBUG("Reading log\n");
-  uint32_t start; 
-  uint32_t len;
-  memcpy(&start, instance->readDataBuffer, sizeof(start));
-  memcpy(&len, instance->readDataBuffer+4, sizeof(len));
-  instance->updateLength();
-  start = min(start, instance->dataLength);
-  len = min(sizeof(instance->readDataBuffer)-8, min(len, instance->dataLength-start));
+//  instance->updateLength();
+  uint32_t start = min(instance->readDataStart, instance->dataLength-1);
+  uint32_t len = min(sizeof(instance->readDataBuffer)-4, instance->dataLength-start);
   DEBUG("Reading from %d (%d)\n", start, len);
-  uBit.log.readData(instance->readDataBuffer+8, start, len, DataFormat::CSV, instance->dataLength);
+  uBit.log.readData(instance->readDataBuffer+4, start, len, DataFormat::CSV, instance->dataLength);
   DEBUG("Read log complete\n");
-  instance->readDataBufferLength = len+8;
+  memcpy(instance->readDataBuffer, &instance->readDataStart, sizeof(instance->readDataStart));
+  DEBUG("Size updated too\n");
 }
 
 /**
@@ -452,19 +459,13 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
           }
       }
       break;
-
+ 
       case mbls_cIdxDataRead: {
           if(type == microbit_charattrVALUE) {
             // If already authorized or no passphrase or this passphrase matches.
-            if(authorized && params->len==8) {
-              uint32_t start;
-              uint32_t len;
-              memcpy(&start, params->data, 4);
-              memcpy(&len, params->data+4, 4);
-              DEBUG("Read request at index %d of len %d\n", start, len);
-              // Identify the actual length to read
-              memcpy(readDataBuffer, &start, 4);
-              memcpy(readDataBuffer+4, &len, 4);
+            if(authorized && params->len==4) {
+              memcpy(&readDataStart, params->data, 4);
+              DEBUG("Read request at index %d", start);
               // Do fiber thing...
               create_fiber(BLELogService::logRetrieve, this, fiberDone);
             }
