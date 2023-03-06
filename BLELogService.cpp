@@ -18,6 +18,8 @@
 
 #include "debug.h"
 
+#include<stdio.h>  // sprintf
+
 using namespace pxt;
 
 //////////////// Initialize static members
