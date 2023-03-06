@@ -10,10 +10,6 @@
 #include "EventModel.h"
 #include "debug.h"
 
-#include"peer_manager.h"
-
-
-
 
 /**
   * Class definition for a MicroBit BLE HID Service.
@@ -68,7 +64,7 @@ class BLELogService : public MicroBitBLEService
       mbls_cIdxErase,        // Write (request)
       mbls_cIdxUsage,        // Read/Notify
       mbls_cIdxTime,         // Read 
-      // ?? FULL???
+      // ?? FULL??? 
       mbbs_cIdxCOUNT
     } mbbs_cIdx;
 
