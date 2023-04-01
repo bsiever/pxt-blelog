@@ -222,7 +222,7 @@ void BLELogService::periodicUpdate() {
           DEBUG("S\n");
           if(!readUpdate)
             readStart+=amount;
-          fiber_sleep(20);  // Connection event is 10-20ms
+          fiber_sleep(5);  // Connection event is 10-20ms
         }
       }
       // Send final message / Sentinel (0 length message)

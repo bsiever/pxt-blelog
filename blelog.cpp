@@ -42,13 +42,14 @@ namespace blelog {
         DEBUG("Running Service\n");
         // Log reboot message (used for timestamp assignments)
         uBit.log.logString("Reboot\n");
+//        uBit.log.logData("Reboot","1");
         // Set timestamp format to seconds
         uBit.log.setTimeStamp(TimeStampFormat::Seconds);
         BLELogService::getInstance()->setPassphrase(cpPassphrase);
 #endif
     }
 
-    //%
+//    // %
     void dumpBLELog() {
 #if MICROBIT_CODAL
         const int BUF_SZ = 20;
