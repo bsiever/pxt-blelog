@@ -35,10 +35,11 @@ const uint16_t BLELogService::charUUID[mbbs_cIdxCOUNT] = {
   0x5946,   // mbls_cIdxErase,        // Write (request)
   0x5be4,   // mbls_cIdxUsage,        // Read/Notify
   0x5dd8,   // mbls_cIdxTime          // Read
-  0x5f72    // mbls_cIdxDataRead      // Read & Write
+  0x5f72,   // mbls_cIdxDataRead      // Read & Write
+  0x613e    // mbls_cIdxDataReadSet   // Write & Notify
   // ?? FULL???
 };
-
+ 
 /*
 
 service:  accb4ce4-8a4b-11ed-a1eb-0242ac120002
@@ -52,9 +53,9 @@ accb5946-8a4b-11ed-a1eb-0242ac120002
 accb5be4-8a4b-11ed-a1eb-0242ac120002
 accb5dd8-8a4b-11ed-a1eb-0242ac120002
 accb5f72-8a4b-11ed-a1eb-0242ac120002
+accb613e-8a4b-11ed-a1eb-0242ac120002
 
 Spares:
-accb613e-8a4b-11ed-a1eb-0242ac120002
 accb6332-8a4b-11ed-a1eb-0242ac120002
 
 */
@@ -175,7 +176,12 @@ BLELogService::BLELogService()
   CreateCharacteristic( mbls_cIdxDataRead, charUUID[ mbls_cIdxDataRead ],
                       (uint8_t *)&readDataBuffer,
                       0, sizeof(readDataBuffer),
-                      microbit_propREAD | microbit_propREADAUTH | microbit_propWRITE_WITHOUT); 
+                      microbit_propREAD | microbit_propREADAUTH); 
+
+  CreateCharacteristic( mbls_cIdxDataReadSet, charUUID[ mbls_cIdxDataReadSet ],
+                      (uint8_t *)&readDataStart,
+                      0, sizeof(readDataStart),
+                      microbit_propWRITE_WITHOUT | microbit_propNOTIFY); 
 
   setAuthorized(false);
   advertise();
@@ -368,6 +374,8 @@ void BLELogService::logRetrieve(void *data) {
   DEBUG("Read log complete\n");
   memcpy(instance->readDataBuffer, &instance->readDataStart, sizeof(instance->readDataStart));
   DEBUG("Size updated too\n");
+  // Nofity that it's ready for read
+  instance->notifyChrValue(mbls_cIdxDataReadSet, (uint8_t*) &instance->readDataStart, sizeof(instance->readDataStart));  
 }
 
 /**
@@ -464,7 +472,7 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
       }
       break;
  
-      case mbls_cIdxDataRead: {
+      case mbls_cIdxDataReadSet: {
           if(type == microbit_charattrVALUE) {
             // If already authorized or no passphrase or this passphrase matches.
             if(authorized && params->len==4) {
