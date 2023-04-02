@@ -19,13 +19,13 @@ namespace blelog {
         0;
     }
 
-    //% blelog="dumpBLELog" block="dump ble log"
-    //% shim=blelog::dumpBLELog
-    //% group="micro:bit (V2)"
-    export function dumpBLELog() : void {
-        // Per https://github.com/microsoft/pxt-microbit/issues/4292
-        0;
-    }
+    // //% blelog="dumpBLELog" block="dump ble log"
+    // //% shim=blelog::dumpBLELog
+    // //% group="micro:bit (V2)"
+    // export function dumpBLELog() : void {
+    //     // Per https://github.com/microsoft/pxt-microbit/issues/4292
+    //     0;
+    // }
 
 
 }

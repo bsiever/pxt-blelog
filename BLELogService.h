@@ -10,10 +10,6 @@
 #include "EventModel.h"
 #include "debug.h"
 
-#include"peer_manager.h"
-
-
-
 
 /**
   * Class definition for a MicroBit BLE HID Service.

@@ -87,3 +87,17 @@ The current micro:bit clock (milliseconds) as a `uint64_t`.
 
 <script src="https://makecode.com/gh-pages-embed.js"></script>
 <script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
+
+
+## Misc. Data
+
+| Fiber sleep | Throughput (bytes/sec) |
+| 20 | 909 | 
+| 10 | 1449 |
+| 7 | 1824 |
+| 5 | 1977 |
+| 4 | 775 |
+| 2 | 749 |
+| 1 | 850 |
+
+Initially I was using 20.  I've updated it to 5, which nearly doubles performance of the initial read. 

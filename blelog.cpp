@@ -40,15 +40,19 @@ namespace blelog {
             DEBUG("No Passphrase\n");
         }
         DEBUG("Running Service\n");
-        // Log reboot message (used for timestamp assignments)
-        uBit.log.logString("Reboot\n");
+
         // Set timestamp format to seconds
         uBit.log.setTimeStamp(TimeStampFormat::Seconds);
+
+        // On reboot if the log isn't empty, add a timestamp-only with 0. 
+        if(uBit.log.getDataLength(DataFormat::CSV) > 0) {
+            uBit.log.logString("0\n");
+        }
         BLELogService::getInstance()->setPassphrase(cpPassphrase);
 #endif
     }
 
-    //%
+//    // %
     void dumpBLELog() {
 #if MICROBIT_CODAL
         const int BUF_SZ = 20;
@@ -68,7 +72,7 @@ namespace blelog {
         //     done = buffer[0] == 0 || buffer[1] == 0xFF;
         //     index++;
         // } while(index<100 && !done);
-        // DEBUG("\n");
+        // DEBUG("\n"); 
 
         uint32_t totalLen = uBit.log.getDataLength(DataFormat::CSV);
         uint32_t remaining = totalLen;
