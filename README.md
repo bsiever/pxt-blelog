@@ -101,3 +101,5 @@ The current micro:bit clock (milliseconds) as a `uint64_t`.
 | 1 | 850 |
 
 Initially I was using 20.  I've updated it to 5, which nearly doubles performance of the initial read. 
+
+Redesign using ~500 byte long reads:  Throughput was about 600 bytes / second.  Streaming approach was about 3x better. 
