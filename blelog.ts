@@ -10,12 +10,12 @@
  */
 //% color=#0000FF 
 //% icon="\uf045"       
-//% block="Logger Bluetooth"
+//% block="Log Bluetooth"
 //% group="micro:bit (V2)"
 namespace blelog {
     /**
      * Start the Bluetooth Access to the Data Logger's Data
-     * @param {passphrase} Optional passphrase
+     * @param {string} passphrase optional pass phrase to limit access to the data
      */
     //% block="bluetooth data logger service || with passphrase $passphrase"
     //% passphrase.defl=""

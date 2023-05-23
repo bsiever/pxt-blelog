@@ -1,10 +1,6 @@
 # BLE Log Service
 
-<!-- ```package
-pins=github:bsiever/microbit-pxt-blelog
-``` -->
-
-Extension for Bluetooth retrieval and modification of the micro:bit v2 data logger's log.
+Extension for Bluetooth retrieval and modification of the micro:bit v2 data logger's log.  
 
 # Enabling the service
 
@@ -21,6 +17,12 @@ If a passphrase is empty, no passphrase is required for other devices to retriev
 ```block
 blelog.startBLELogService()
 ```
+
+# Retrieving Data
+
+Currently data can be retrieved by a browser based client (currently Chrome and Edge only):  [https://bsiever.github.io/microbit-webblelog/](https://bsiever.github.io/microbit-webblelog/).
+
+A JavaScript library is available to develop User Interfaces, etc.: [https://github.com/bsiever/microbit-webblelog](https://github.com/bsiever/microbit-webblelog)
 
 
 # Bluetooth Service Overview 
@@ -83,23 +85,5 @@ Write the full word "ERASE" to erase the log file. (It only erases if authorized
 
 The current micro:bit clock (milliseconds) as a `uint64_t`.
 
-
-
 <script src="https://makecode.com/gh-pages-embed.js"></script>
 <script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
-
-
-<!-- ## Misc. Data
-
-| Fiber sleep | Throughput (bytes/sec) |
-| 20 | 909 | 
-| 10 | 1449 |
-| 7 | 1824 |
-| 5 | 1977 |
-| 4 | 775 |
-| 2 | 749 |
-| 1 | 850 |
-
-Initially I was using 20.  I've updated it to 5, which nearly doubles performance of the initial read. 
-
-Redesign using ~500 byte long reads:  Throughput was about 600 bytes / second.  Streaming approach was about 3x better.  -->
