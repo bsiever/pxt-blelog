@@ -19,49 +19,40 @@ Redesign using ~500 byte long reads:  Throughput was about 600 bytes / second.  
 
 ## TODO
 
-The category has no icon. -> Done
 
 There is a commit after the last tag.
 
-Does pxt.json need to configure open security? -> Yes.  That's the intended approach.  
-
-The javascript tooltip on namespace "blelog" doesn't seem appropriate, and startBLELogService doesn't have a tooltip. -> Done, but need to test / confirm
-
 Please see https://makecode.com/extensions/getting-started#:~:text=It%20is%20recommended%20that%20for%20an%20extension%20called%20banana%20the%20repository%20should%20be%20called%20pxt%2Dbanana.
 
+# REPLY
+
+Does pxt.json need to configure open security? -> Yes.  That's the intended approach.  
+
+How did you choose the service and characteristic UUIDs? -> Explained
 
 ## DONE
 
-​
+The javascript tooltip on namespace "blelog" doesn't seem appropriate, and startBLELogService doesn't have a tooltip. -> Done, but need to test / confirm
+
+The category has no icon. -> Done
+
 The category name "Data Logger Bluetooth" is very long, and makes the whole panel wider.  -> "Log Bluetooth"
 
 The block has a misspelling: "passphase". -> Fixed
 
 Does pxt.json need to enable a large DMESG buffer to serial? -> Removed
 
-How did you choose the service and characteristic UUIDs? -> Explained
-
 I think "pins=github:bsiever/microbit-pxt-blelog" should be removed from the README.
 https://github.com/microsoft/pxt-microbit/issues/4832#issuecomment-1554747300 -> Removed
 
 The README MIsc. Data section doesn't seem helpful. -> Refactored
  
-
-
-
-
-
-
 # Junk 
 
-
+```
 // Same icon as datalogger block? (f0ce), but blue?  
 //  line-chart: f201? paper-plane: f1d8? share-square: f045
-
-
-
-
-
+```
 
 <!-- ```package
 pins=github:bsiever/microbit-pxt-blelog
