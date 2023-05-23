@@ -1,8 +1,8 @@
 # BLE Log Service
 
-```package
+<!-- ```package
 pins=github:bsiever/microbit-pxt-blelog
-```
+``` -->
 
 Extension for Bluetooth retrieval and modification of the micro:bit v2 data logger's log.
 
@@ -89,7 +89,7 @@ The current micro:bit clock (milliseconds) as a `uint64_t`.
 <script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
 
 
-## Misc. Data
+<!-- ## Misc. Data
 
 | Fiber sleep | Throughput (bytes/sec) |
 | 20 | 909 | 
@@ -102,4 +102,4 @@ The current micro:bit clock (milliseconds) as a `uint64_t`.
 
 Initially I was using 20.  I've updated it to 5, which nearly doubles performance of the initial read. 
 
-Redesign using ~500 byte long reads:  Throughput was about 600 bytes / second.  Streaming approach was about 3x better. 
+Redesign using ~500 byte long reads:  Throughput was about 600 bytes / second.  Streaming approach was about 3x better.  -->

@@ -4,12 +4,20 @@
 
 // Same icon as datalogger block? (f0ce), but blue?  
 //  line-chart: f201? paper-plane: f1d8? share-square: f045
+
+/**
+ * Bluetooth Access to Data Logger's Data
+ */
 //% color=#0000FF 
 //% icon="\uf045"       
-//% block="Data Logger Bluetooth"
+//% block="Logger Bluetooth"
 //% group="micro:bit (V2)"
 namespace blelog {
-    //% block="bluetooth data logger service || with passphase $passphrase"
+    /**
+     * Start the Bluetooth Access to the Data Logger's Data
+     * @param {passphrase} Optional passphrase
+     */
+    //% block="bluetooth data logger service || with passphrase $passphrase"
     //% passphrase.defl=""
     //% shim=blelog::startBLELogService
     //% expandableArgumentMode="toggle"

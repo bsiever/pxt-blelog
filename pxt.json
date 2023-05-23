@@ -23,7 +23,7 @@
     ],
     "public": true,
     "targetVersions": {
-        "target": "5.1.1",
+        "target": "5.0.12",
         "targetId": "microbit"
     },
     "supportedTargets": [
@@ -43,13 +43,11 @@
     },
     "yotta": {
         "config": {
-            "DMESG_SERIAL_DEBUG": 1,
-            "DEVICE_DMESG_BUFFER_SIZE": 8192,
             "microbit-dal": {
                 "bluetooth": {
-                    "open": 0,
-                    "whitelist": 1,
-                    "security_level": "SECURITY_MODE_ENCRYPTION_OPEN_LINK",
+                    "open": 1,
+                    "whitelist": 0,
+                    "security_level": null,
                     "device_info_service": 1
                 }
             }
