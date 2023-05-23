@@ -19,7 +19,7 @@ Redesign using ~500 byte long reads:  Throughput was about 600 bytes / second.  
 
 ## TODO
 
-The category has no icon.
+The category has no icon. -> Done
 
 There is a commit after the last tag.
 
@@ -46,6 +46,17 @@ https://github.com/microsoft/pxt-microbit/issues/4832#issuecomment-1554747300 ->
 
 The README MIsc. Data section doesn't seem helpful. -> Refactored
  
+
+
+
+
+
+
+# Junk 
+
+
+// Same icon as datalogger block? (f0ce), but blue?  
+//  line-chart: f201? paper-plane: f1d8? share-square: f045
 
 
 
