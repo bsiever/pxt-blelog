@@ -21,6 +21,7 @@ using namespace pxt;
 
 namespace blelog { 
 
+    //%
     void startBLELogService(void* passphrase) {
 #if MICROBIT_CODAL
         // Only start service once
