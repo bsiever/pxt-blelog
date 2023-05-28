@@ -15,8 +15,7 @@
         "shims.d.ts",
         "enums.d.ts",
         "BLELogService.h",
-        "BLELogService.cpp",
-        "debug.h"
+        "BLELogService.cpp"
     ],
     "testFiles": [
         "test.ts"

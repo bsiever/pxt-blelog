@@ -8,7 +8,7 @@
 #include "MicroBitBLEManager.h"
 #include "MicroBitBLEService.h"
 #include "EventModel.h"
-#include "debug.h"
+//#include "debug.h"
 
 
 /**

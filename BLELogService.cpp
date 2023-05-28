@@ -16,7 +16,7 @@
 #include "ble_conn_params.h"
 #include "ble_dis.h"
 
-#include "debug.h"
+//#include "debug.h"
 
 #include<stdio.h>  // sprintf
 
@@ -75,10 +75,10 @@ void BLELogService::setPassphrase(const char *newPassphrase) {
   if(newPassphrase && strlen(newPassphrase)>0) {
     strncpy(passphrase, newPassphrase, sizeof(passphrase)-1);
     passphrase[sizeof(passphrase)-1]=0; // Ensure null term.
-    DEBUG("Passphrase is %s\n", passphrase);
+    //DEBUG("Passphrase is %s\n", passphrase);
   } else {
     passphrase[0] = 0; 
-    DEBUG("Passphrase is NULL\n");
+    //DEBUG("Passphrase is NULL\n");
   }
 }
 
@@ -95,7 +95,7 @@ void BLELogService::backgroundFiber(void *data) {
 }
 
 void BLELogService::resetConnection() {
-  DEBUG("Resetting Connection\n");
+  //DEBUG("Resetting Connection\n");
   erase = false; 
   memset(readRequest, 0, sizeof(readRequest)); // 32-bits for index, 32-bits for size
   readStart = 0;
@@ -117,7 +117,7 @@ BLELogService::BLELogService()
   dataLength = 0;
   resetConnection();
 
-  DEBUG("BLELog Serv starting\n");
+  //DEBUG("BLELog Serv starting\n");
 
 // Base: accb4ce4-8a4b-11ed-a1eb-0242ac120002
   uint8_t baseUUID[] = { 0xac, 0xcb, 0x4c, 0xe4,  0x8a, 0x4b  ,0x11, 0xed,  
@@ -175,7 +175,7 @@ BLELogService::BLELogService()
 
 
 void BLELogService::periodicUpdate() {
-//  DEBUG("Update...\n");
+//  //DEBUG("Update...\n");
   if(authorized) {
 
     // Update values and do notifies if values change
@@ -199,7 +199,7 @@ void BLELogService::periodicUpdate() {
 
     if(readInProgress) {
       // Sanity check
-      int packetCount = 0;
+      // int packetCount = 0;
       if(readStart<dataLength) {
         uint32_t endIndex = min(dataLength, readStart+readLength);
         // Send index & <= 16 bytes of data
@@ -212,14 +212,14 @@ void BLELogService::periodicUpdate() {
 
           uint32_t amount = min(16, endIndex-readStart);
           memcpy(dataBuffer, &readStart, sizeof(readStart));
-          DEBUG("read %d\n", readStart);
+          //DEBUG("read %d\n", readStart);
           updateLength();
           uBit.log.readData(dataBuffer+4, readStart, amount, DataFormat::CSV, dataLength);
           // Notify / Update
-          DEBUG("N\n");
+          //DEBUG("N\n");
           notifyChrValue(mbls_cIdxData, dataBuffer, amount+4);  
           // Delay to ensure no overrun.
-          DEBUG("S\n");
+          //DEBUG("S\n");
           if(!readUpdate)
             readStart+=amount;
           fiber_sleep(5);  // Connection event is 10-20ms
@@ -240,7 +240,7 @@ void BLELogService::periodicUpdate() {
   */
 void BLELogService::onConnect( const microbit_ble_evt_t *p_ble_evt)
 {
-  DEBUG("BLE Log onConnect\n");
+  //DEBUG("BLE Log onConnect\n");
   // Reload Peer data 
   setAuthorized(strlen(passphrase)==0);
   resetConnection();
@@ -251,7 +251,7 @@ void BLELogService::onConnect( const microbit_ble_evt_t *p_ble_evt)
   */
 void BLELogService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
 {
-    DEBUG("BLE Log onDisconnect\n");
+    //DEBUG("BLE Log onDisconnect\n");
     setAuthorized(false);
     resetConnection();
 }
@@ -267,14 +267,14 @@ void BLELogService::updateUsage() {
     uint32_t totalSize =  uBit.flash.getFlashEnd() - sizeof(uint32_t) - dataStart;
     uint32_t inUse = uBit.log.getDataLength(DataFormat::CSV);
 
-    // DEBUG("Usage comp. dataStart=%d, totalSize=%d, inUse=%d\n", dataStart, totalSize, inUse);
+    // //DEBUG("Usage comp. dataStart=%d, totalSize=%d, inUse=%d\n", dataStart, totalSize, inUse);
     usage = min(1000,(1000*inUse/totalSize));
     setChrValue( mbls_cIdxUsage, (uint8_t *)&usage, sizeof(usage));
 }
 
 void BLELogService::onDataRead( microbit_onDataRead_t *params) {
-    DEBUG("BLE Log onDataRead\n");
-    debugAttribute(params->handle);
+    //DEBUG("BLE Log onDataRead\n");
+    //debugAttribute(params->handle);
     microbit_charattr_t type;
     int index = charHandleToIdx(params->handle, &type);
 
@@ -329,8 +329,8 @@ void BLELogService::onDataRead( microbit_onDataRead_t *params) {
   */
 void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
 {
-    DEBUG("BLE Log onDataWritten\n");
-    debugAttribute(params->handle);
+    //DEBUG("BLE Log onDataWritten\n");
+    //debugAttribute(params->handle);
 
     microbit_charattr_t type;
     int index = charHandleToIdx(params->handle, &type);
@@ -338,7 +338,7 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
     switch(index) {
       case mbls_cIdxSecurity: {
           if(type == microbit_charattrCCCD) {
-                  bool status = params->len>0 && params->data[0] ? true : false;
+                  //bool status = params->len>0 && params->data[0] ? true : false;
                   // Update the value to do the notify. 
                   setAuthorized(authorized);
           }        
@@ -347,7 +347,7 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
 
       case mbls_cIdxUsage: {
           if(type == microbit_charattrCCCD) {
-                  bool status = params->len>0 && params->data[0] ? true : false;
+                  //bool status = params->len>0 && params->data[0] ? true : false;
                   // Provoke a notify
                   usage = -1;
           }        
@@ -356,7 +356,7 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
 
      case mbls_cIdxDataLength: {
           if(type == microbit_charattrCCCD) {
-                  bool status = params->len>0 && params->data[0] ? true : false;
+                  //bool status = params->len>0 && params->data[0] ? true : false;
                   // Provoke a notify
                   dataLength = -1;
           }        
@@ -372,11 +372,11 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
                strlen(passphrase)==0 || 
                ( passphraseLen == params->len && 
                  strncmp(passphrase, (char *)params->data,passphraseLen)==0)) {
-              DEBUG("Authorized\n");
+              //DEBUG("Authorized\n");
               setAuthorized(true);
             } else {
-              DEBUG("Invalid Passphrase %s\n", params->data[0]);
-              DEBUG("Authorized = %d\n", authorized);
+              //DEBUG("Invalid Passphrase %s\n", params->data[0]);
+              //DEBUG("Authorized = %d\n", authorized);
               // Leave authorized at current value, but notify / update
               setAuthorized(false);
             }
@@ -385,14 +385,14 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
       break;
 
       case mbls_cIdxErase: {
-          DEBUG("Erase request %d %s\n", params->len, params->data);
+          //DEBUG("Erase request %d %s\n", params->len, params->data);
           if(type == microbit_charattrVALUE) {
             if(authorized && params->len==5 && strncmp("ERASE", (char*)params->data, 5)==0) {
-              DEBUG("Erasing...");
+              //DEBUG("Erasing...");
               // Do the erase in the periodic update loop
               erase = true;
             } else {
-              DEBUG("ERASE SKIPPED\n");
+              //DEBUG("ERASE SKIPPED\n");
             }
             memset(eraseRequest, 0, sizeof(eraseRequest));
             setChrValue(mbls_cIdxErase, (uint8_t*)eraseRequest, sizeof(eraseRequest));
@@ -403,30 +403,30 @@ void BLELogService::onDataWritten( const microbit_ble_evt_write_t *params)
       case mbls_cIdxDataRequest: {
           if(type == microbit_charattrVALUE && params->len==8) {
             if(readInProgress) {
-              DEBUG("Abandoning read in progress\n");
+              //DEBUG("Abandoning read in progress\n");
               readUpdate = true;
             } else {
               readUpdate = false;
             }
             memcpy(&readStart, params->data, 4);
             memcpy(&readLength, params->data+4, 4);
-            DEBUG("Reading at index %d of len %d\n", readStart, readLength);
+            //DEBUG("Reading at index %d of len %d\n", readStart, readLength);
             // If there's already a read in progress, abandon it.
             readInProgress = true;
-            DEBUG("Read in progress..%d\n", readInProgress);
+            //DEBUG("Read in progress..%d\n", readInProgress);
           }
       }
       break;
 
       default:
-        DEBUG("Unhandled write");
-
+        //DEBUG("Unhandled write");
+        break;
     }
 
 }
 
 bool BLELogService::onBleEvent(const microbit_ble_evt_t *p_ble_evt) {
-    DEBUG("onBleEvent id = %d\n", p_ble_evt->header.evt_id);
+    //DEBUG("onBleEvent id = %d\n", p_ble_evt->header.evt_id);
     // Let usual process handle it. 
     return MicroBitBLEService::onBleEvent(p_ble_evt);
 }
@@ -442,14 +442,14 @@ void BLELogService::setName() {
 }
 
 void BLELogService::setAuthorized(bool nowAuthorized) {
-  DEBUG("setAuthorized(%d)\n", nowAuthorized);
+  //DEBUG("setAuthorized(%d)\n", nowAuthorized);
   authorized = nowAuthorized ? 0xFF : 0x00;
   setChrValue( mbls_cIdxSecurity, &authorized, sizeof(authorized));
   notifyChrValue(mbls_cIdxSecurity, &authorized, sizeof(authorized));  
 }
 
 void BLELogService::advertise() {
-    DEBUG("advertise() Starting\n");
+    //DEBUG("advertise() Starting\n");
       // Stop any active advertising
         uBit.bleManager.stopAdvertising();
         setName();
@@ -490,34 +490,34 @@ void BLELogService::advertise() {
         uBit.bleManager.advertise();
     } 
 
-void BLELogService::debugAttribute(int handle) {
-#ifdef DEBUG_ENABLED
-      microbit_charattr_t type;
-      int index = charHandleToIdx(handle, &type);
+// void BLELogService::debugAttribute(int handle) {
+// #ifdef DEBUG_ENABLED
+//       microbit_charattr_t type;
+//       int index = charHandleToIdx(handle, &type);
 
-      const char *typeName;
-      switch(type) {
-        case microbit_charattrVALUE:
-          typeName = "Value";
-          break;
-        case microbit_charattrDESC:
-          typeName = "Desc";
-          break;
-        case microbit_charattrCCCD:
-          typeName = "CCCD";
-          break;
-        case microbit_charattrSCCD:
-          typeName = "SCCD";
-          break;
-        default:
-          typeName = "UNKNOWN";
-      }
-      if(index<0 || index>=mbbs_cIdxCOUNT) index = mbbs_cIdxCOUNT;
+//       const char *typeName;
+//       switch(type) {
+//         case microbit_charattrVALUE:
+//           typeName = "Value";
+//           break;
+//         case microbit_charattrDESC:
+//           typeName = "Desc";
+//           break;
+//         case microbit_charattrCCCD:
+//           typeName = "CCCD";
+//           break;
+//         case microbit_charattrSCCD:
+//           typeName = "SCCD";
+//           break;
+//         default:
+//           typeName = "UNKNOWN";
+//       }
+//       if(index<0 || index>=mbbs_cIdxCOUNT) index = mbbs_cIdxCOUNT;
 
-      char const *charNames[] = {"Security", "Passphrase", "Data Length", "Data", "Data Req", "Erase", "Usage", "Time"};
-      if(index<mbbs_cIdxCOUNT) {
-        DEBUG("     %s %s\n", charNames[index], typeName);
-      }
-#endif
-}
+//       char const *charNames[] = {"Security", "Passphrase", "Data Length", "Data", "Data Req", "Erase", "Usage", "Time"};
+//       if(index<mbbs_cIdxCOUNT) {
+//         //DEBUG("     %s %s\n", charNames[index], typeName);
+//       }
+// #endif
+// }
 #endif

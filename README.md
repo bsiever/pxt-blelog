@@ -85,5 +85,9 @@ Write the full word "ERASE" to erase the log file. (It only erases if authorized
 
 The current micro:bit clock (milliseconds) as a `uint64_t`.
 
+# Acknowledgements 
+
+Icon based on [Font icon 0xF147](https://www.iconfinder.com/search?q=f0a7) SVG.
+
 <script src="https://makecode.com/gh-pages-embed.js"></script>
 <script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
