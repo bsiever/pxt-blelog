@@ -1,7 +1,7 @@
 {
     "name": "pxt-blelog",
     "version": "0.1.14",
-    "description": "Data Logger Bluetooth Service",
+    "description": "Data Logger Bluetooth Service. micro:bit (V2) only.",
     "license": "MIT",
     "dependencies": {
         "core": "*",
