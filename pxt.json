@@ -40,9 +40,13 @@
         "imageUrl": "file:../icon.png",
         "feedbackUrl": "http://siever.info"
     },
-    "config": {
-        "DEVICE_BLE": 1,
-        "MICROBIT_BLE_OPEN": 1,
-        "MICROBIT_BLE_PAIRING_MODE": 0
+    "yotta": {
+        "config": {
+            "microbit-dal": {
+                "bluetooth": {
+                    "open": 1
+                }
+            }
+        }
     }
 }
