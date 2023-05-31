@@ -30,7 +30,7 @@ input.onButtonPressed(Button.AB, function () {
     basic.clearScreen()
 })
 
-basic.showIcon(IconNames.Happy)
+basic.showIcon(IconNames.Heart)
 blelog.startBLELogService()
 datalogger.includeTimestamp(FlashLogTimeStampFormat.Seconds)
 
