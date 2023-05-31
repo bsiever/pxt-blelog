@@ -40,7 +40,7 @@
         "imageUrl": "file:../icon.png",
         "feedbackUrl": "http://siever.info"
     },
-    "config":{
+    "config": {
         "DEVICE_BLE": 1,
         "MICROBIT_BLE_OPEN": 1
     }
