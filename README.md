@@ -24,6 +24,7 @@ Currently data can be retrieved by a browser based client (currently Chrome and 
 
 A JavaScript library is available to develop User Interfaces, etc.: [https://github.com/bsiever/microbit-webblelog](https://github.com/bsiever/microbit-webblelog)
 
+Students at [Michigan Tech](https://www.mtu.edu/cs/) developed a Web App to Collect and Graph Data! [Live Site](https://2024-ui-sp.github.io/Micro-bit-ble/)!  ([code](https://github.com/2024-UI-SP/Micro-bit-ble/))
 
 # Bluetooth Service Overview 
 
